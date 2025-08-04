@@ -17,11 +17,12 @@ import { TodoSkeleton, StatsSkeleton, FormSkeleton } from '@/components/ui/loadi
 import { createTodo, updateTodo, deleteTodo, toggleTodo, getTodos } from '@/app/actions/todos'
 
 export default function UserDashboard() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const [todos, setTodos] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [filter, setFilter] = useState('all') // 'all', 'completed', 'pending'
+  const [error, setError] = useState(null)
   const { toast } = useToast()
 
   // Form setup with react-hook-form and zod validation
@@ -36,18 +37,37 @@ export default function UserDashboard() {
   })
 
   useEffect(() => {
+    // Only load data if session is authenticated
+    if (status === 'loading') return
+    
+    if (status === 'unauthenticated') {
+      setIsInitialLoading(false)
+      return
+    }
+
     const loadData = async () => {
       try {
+        setError(null)
         await fetchTodos()
+      } catch (err) {
+        console.error('Error loading dashboard data:', err)
+        setError('Failed to load dashboard data')
+        toast({
+          title: 'Error',
+          description: 'Failed to load dashboard data',
+          variant: 'destructive',
+        })
       } finally {
         setIsInitialLoading(false)
       }
     }
     
-    loadData()
+    if (session?.user?.id) {
+      loadData()
+    }
     
     // Subscribe to real-time updates if Pusher is configured
-    if (pusherClient) {
+    if (pusherClient && session?.user?.id) {
       const channel = pusherClient.subscribe('todos')
       
       channel.bind('todo-completed', (data) => {
@@ -63,14 +83,16 @@ export default function UserDashboard() {
         pusherClient.unsubscribe('todos')
       }
     }
-  }, [session?.user?.id])
+  }, [session?.user?.id, status])
 
   // Check for due date notifications
   useEffect(() => {
+    if (!todos || todos.length === 0) return
+
     const checkDueDates = () => {
       const now = new Date()
       const overdueTodos = todos.filter(todo => 
-        todo.dueDate && 
+        todo?.dueDate && 
         new Date(todo.dueDate) < now && 
         !todo.completed
       )
@@ -88,9 +110,7 @@ export default function UserDashboard() {
     const interval = setInterval(checkDueDates, 5 * 60 * 1000)
     
     // Initial check
-    if (todos.length > 0) {
-      checkDueDates()
-    }
+    checkDueDates()
 
     return () => clearInterval(interval)
   }, [todos])
@@ -98,9 +118,14 @@ export default function UserDashboard() {
   const fetchTodos = async () => {
     try {
       const result = await getTodos()
-      if (result && result.todos) {
+      
+      // Ensure result is defined and has expected structure
+      if (result && Array.isArray(result.todos)) {
         setTodos(result.todos)
       } else if (result && result.error) {
+        console.error('Error from getTodos:', result.error)
+        setError(result.error)
+        setTodos([])
         toast({
           title: 'Error',
           description: result.error,
@@ -110,15 +135,17 @@ export default function UserDashboard() {
         // Handle case where result is undefined or doesn't have expected properties
         console.warn('Unexpected result from getTodos:', result)
         setTodos([])
+        setError('Failed to fetch todos')
       }
     } catch (error) {
       console.error('Error fetching todos:', error)
+      setError('Failed to fetch todos')
+      setTodos([])
       toast({
         title: 'Error',
         description: 'Failed to fetch todos',
         variant: 'destructive',
       })
-      setTodos([])
     }
   }
 
@@ -133,21 +160,23 @@ export default function UserDashboard() {
 
       const result = await createTodo(formData)
       
-      if (result.success) {
+      if (result && result.success) {
         form.reset()
-        fetchTodos()
+        await fetchTodos()
         toast({
           title: 'Success',
           description: 'Todo added successfully!',
         })
       } else {
+        const errorMessage = result?.error || 'Failed to add todo.'
         toast({
           title: 'Error',
-          description: result.error || 'Failed to add todo.',
+          description: errorMessage,
           variant: 'destructive',
         })
       }
     } catch (error) {
+      console.error('Error adding todo:', error)
       toast({
         title: 'Error',
         description: 'Failed to add todo.',
@@ -162,8 +191,8 @@ export default function UserDashboard() {
     try {
       const result = await toggleTodo(todoId, !completed)
       
-      if (result.success) {
-        fetchTodos()
+      if (result && result.success) {
+        await fetchTodos()
         
         // Notify admin if task is completed and Pusher is configured
         if (!completed) {
@@ -176,13 +205,15 @@ export default function UserDashboard() {
           }
         }
       } else {
+        const errorMessage = result?.error || 'Failed to update todo'
         toast({
           title: 'Error',
-          description: result.error || 'Failed to update todo',
+          description: errorMessage,
           variant: 'destructive',
         })
       }
     } catch (error) {
+      console.error('Error toggling todo:', error)
       toast({
         title: 'Error',
         description: 'Failed to update todo',
@@ -195,20 +226,22 @@ export default function UserDashboard() {
     try {
       const result = await deleteTodo(todoId)
       
-      if (result.success) {
-        fetchTodos()
+      if (result && result.success) {
+        await fetchTodos()
         toast({
           title: 'Success',
           description: 'Todo deleted successfully!',
         })
       } else {
+        const errorMessage = result?.error || 'Failed to delete todo'
         toast({
           title: 'Error',
-          description: result.error || 'Failed to delete todo',
+          description: errorMessage,
           variant: 'destructive',
         })
       }
     } catch (error) {
+      console.error('Error deleting todo:', error)
       toast({
         title: 'Error',
         description: 'Failed to delete todo.',
@@ -217,15 +250,19 @@ export default function UserDashboard() {
     }
   }
 
-  const filteredTodos = todos.filter(todo => {
+  // Ensure todos is always an array
+  const safeTodos = Array.isArray(todos) ? todos : []
+  
+  const filteredTodos = safeTodos.filter(todo => {
+    if (!todo) return false
     if (filter === 'completed') return todo.completed
     if (filter === 'pending') return !todo.completed
     if (filter === 'overdue') return !todo.completed && todo.dueDate && new Date(todo.dueDate) < new Date()
     return true
   })
 
-  const completedCount = todos.filter(todo => todo.completed).length
-  const totalCount = todos.length
+  const completedCount = safeTodos.filter(todo => todo && todo.completed).length
+  const totalCount = safeTodos.length
 
   const handleSignOut = async () => {
     try {
@@ -234,13 +271,46 @@ export default function UserDashboard() {
         redirect: true 
       })
     } catch (error) {
+      console.error('Error signing out:', error)
       // Fallback: redirect manually
       window.location.href = '/auth/signin'
     }
   }
 
-  const goToSignOutPage = () => {
-    window.location.href = '/auth/signout'
+  // Show loading state while session is loading
+  if (status === 'loading' || isInitialLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="container-mobile max-w-4xl mx-auto py-4 sm:py-8">
+          <StatsSkeleton />
+          <FormSkeleton />
+          <div className="space-mobile">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <TodoSkeleton key={index} />
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="container-mobile max-w-4xl mx-auto py-4 sm:py-8">
+          <Card>
+            <CardContent className="card-mobile text-center">
+              <h2 className="text-xl font-semibold text-red-600 mb-4">Dashboard Error</h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
+              <Button onClick={fetchTodos} className="btn-mobile">
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -253,13 +323,13 @@ export default function UserDashboard() {
               My Todo Dashboard
             </h1>
             <p className="text-mobile text-gray-600 dark:text-gray-400 mt-2">
-              Welcome back, {session?.user?.email}
+              Welcome back, {session?.user?.email || 'User'}
             </p>
           </div>
           <div className="nav-mobile">
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               <User className="w-4 h-4" />
-              {session?.user?.role}
+              {session?.user?.role || 'user'}
             </div>
             <ThemeToggle />
             <Button
@@ -274,142 +344,134 @@ export default function UserDashboard() {
         </div>
 
         {/* Stats */}
-        {isInitialLoading ? (
-          <StatsSkeleton />
-        ) : (
-          <div className="stats-mobile mb-6 sm:mb-8">
-            <Card>
-              <CardContent className="card-mobile">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Total Tasks
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {totalCount}
-                    </p>
-                  </div>
-                  <div className="text-blue-600">
-                    <span className="text-2xl">•</span>
-                  </div>
+        <div className="stats-mobile mb-6 sm:mb-8">
+          <Card>
+            <CardContent className="card-mobile">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Total Tasks
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {totalCount}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="card-mobile">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Completed
-                    </p>
-                    <p className="text-2xl font-bold text-green-600">
-                      {completedCount}
-                    </p>
-                  </div>
-                  <div className="text-green-600">
-                    <CheckCircle className="w-8 h-8" />
-                  </div>
+                <div className="text-blue-600">
+                  <span className="text-2xl">•</span>
                 </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="card-mobile">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Completion Rate
-                    </p>
-                    <p className="text-2xl font-bold text-blue-600">
-                      {totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0}%
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Add Todo Form */}
-        {isInitialLoading ? (
-          <FormSkeleton />
-        ) : (
-          <Card className="mb-6 sm:mb-8">
-            <CardHeader>
-              <CardTitle className="text-mobile-lg">Add New Todo</CardTitle>
-              <CardDescription className="text-mobile">
-                Create a new task to track your progress
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={form.handleSubmit(addTodo)} className="form-mobile">
-                <div className="flex-mobile gap-4">
-                  <div className="flex-1">
-                    <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Title *
-                    </label>
-                    <Input
-                      id="title"
-                      {...form.register('title')}
-                      placeholder="Enter todo title..."
-                      disabled={isLoading}
-                      className={`input-mobile ${form.formState.errors.title ? 'border-red-500' : ''}`}
-                    />
-                    {form.formState.errors.title && (
-                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.title.message}</p>
-                    )}
-                  </div>
-                  <div className="flex items-end">
-                    <Button 
-                      type="submit" 
-                      disabled={isLoading || !form.watch('title') || !form.watch('description')}
-                      className="btn-mobile"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      {isLoading ? 'Adding...' : 'Add Todo'}
-                    </Button>
-                  </div>
-                </div>
-                <div className="grid-mobile">
-                  <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Description *
-                    </label>
-                    <textarea
-                      id="description"
-                      {...form.register('description')}
-                      placeholder="Enter todo description..."
-                      disabled={isLoading}
-                      className={`input-mobile resize-none ${
-                        form.formState.errors.description ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      rows="3"
-                    />
-                    {form.formState.errors.description && (
-                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.description.message}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Due Date (Optional)
-                    </label>
-                    <input
-                      id="dueDate"
-                      type="datetime-local"
-                      {...form.register('dueDate')}
-                      disabled={isLoading}
-                      className={`input-mobile ${
-                        form.formState.errors.dueDate ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    />
-                    {form.formState.errors.dueDate && (
-                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.dueDate.message}</p>
-                    )}
-                  </div>
-                </div>
-              </form>
+              </div>
             </CardContent>
           </Card>
-        )}
+          <Card>
+            <CardContent className="card-mobile">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Completed
+                  </p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {completedCount}
+                  </p>
+                </div>
+                <div className="text-green-600">
+                  <CheckCircle className="w-8 h-8" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="card-mobile">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Completion Rate
+                  </p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0}%
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Add Todo Form */}
+        <Card className="mb-6 sm:mb-8">
+          <CardHeader>
+            <CardTitle className="text-mobile-lg">Add New Todo</CardTitle>
+            <CardDescription className="text-mobile">
+              Create a new task to track your progress
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={form.handleSubmit(addTodo)} className="form-mobile">
+              <div className="flex-mobile gap-4">
+                <div className="flex-1">
+                  <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Title *
+                  </label>
+                  <Input
+                    id="title"
+                    {...form.register('title')}
+                    placeholder="Enter todo title..."
+                    disabled={isLoading}
+                    className={`input-mobile ${form.formState.errors.title ? 'border-red-500' : ''}`}
+                  />
+                  {form.formState.errors.title && (
+                    <p className="text-red-500 text-sm mt-1">{form.formState.errors.title.message}</p>
+                  )}
+                </div>
+                <div className="flex items-end">
+                  <Button 
+                    type="submit" 
+                    disabled={isLoading || !form.watch('title') || !form.watch('description')}
+                    className="btn-mobile"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    {isLoading ? 'Adding...' : 'Add Todo'}
+                  </Button>
+                </div>
+              </div>
+              <div className="grid-mobile">
+                <div>
+                  <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Description *
+                  </label>
+                  <textarea
+                    id="description"
+                    {...form.register('description')}
+                    placeholder="Enter todo description..."
+                    disabled={isLoading}
+                    className={`input-mobile resize-none ${
+                      form.formState.errors.description ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    rows="3"
+                  />
+                  {form.formState.errors.description && (
+                    <p className="text-red-500 text-sm mt-1">{form.formState.errors.description.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Due Date (Optional)
+                  </label>
+                  <input
+                    id="dueDate"
+                    type="datetime-local"
+                    {...form.register('dueDate')}
+                    disabled={isLoading}
+                    className={`input-mobile ${
+                      form.formState.errors.dueDate ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  {form.formState.errors.dueDate && (
+                    <p className="text-red-500 text-sm mt-1">{form.formState.errors.dueDate.message}</p>
+                  )}
+                </div>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
 
         {/* Filter */}
         <div className="mb-4">
@@ -436,7 +498,7 @@ export default function UserDashboard() {
               onClick={() => setFilter('overdue')}
               className="btn-mobile"
             >
-              Overdue ({todos.filter(todo => !todo.completed && todo.dueDate && new Date(todo.dueDate) < new Date()).length})
+              Overdue ({safeTodos.filter(todo => todo && !todo.completed && todo.dueDate && new Date(todo.dueDate) < new Date()).length})
             </Button>
             <Button
               variant={filter === 'completed' ? 'default' : 'outline'}
@@ -450,12 +512,7 @@ export default function UserDashboard() {
 
         {/* Todos List */}
         <div className="space-mobile">
-          {isInitialLoading ? (
-            // Show loading skeletons
-            Array.from({ length: 3 }).map((_, index) => (
-              <TodoSkeleton key={index} />
-            ))
-          ) : filteredTodos.length === 0 ? (
+          {filteredTodos.length === 0 ? (
             <Card>
               <CardContent className="card-mobile text-center">
                 <p className="text-gray-500 dark:text-gray-400">
