@@ -7,6 +7,7 @@ import { todos } from '@/lib/db/schema'
 import { eq, and, or, like, inArray, gte, lte, desc, asc } from 'drizzle-orm'
 import { todoFormSchema, todoUpdateSchema, bulkTodoSchema, searchTodoSchema } from '@/lib/validations/todo'
 import { revalidatePath } from 'next/cache'
+import { formatDisplayDate, formatDateTime } from '@/lib/utils'
 
 export async function createTodo(formData) {
   try {
@@ -401,10 +402,10 @@ export async function exportTodos(format = 'json') {
         todo.title,
         todo.description || '',
         todo.completed ? 'Yes' : 'No',
-        todo.dueDate ? new Date(todo.dueDate).toLocaleDateString() : '',
+        todo.dueDate ? formatDisplayDate(todo.dueDate) : '',
         todo.priority || 'medium',
         todo.tags ? todo.tags.join(', ') : '',
-        new Date(todo.createdAt).toLocaleDateString()
+        formatDisplayDate(todo.createdAt)
       ])
       
       const csvContent = [csvHeaders, ...csvRows]

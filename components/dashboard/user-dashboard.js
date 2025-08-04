@@ -15,6 +15,7 @@ import { todoFormSchema } from '@/lib/validations/todo'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { TodoSkeleton, StatsSkeleton, FormSkeleton } from '@/components/ui/loading-skeleton'
 import { createTodo, updateTodo, deleteTodo, toggleTodo, getTodos } from '@/app/actions/todos'
+import { formatDisplayDate, formatDateTime, isOverdue, getRelativeTime } from '@/lib/utils'
 
 export default function UserDashboard() {
   const { data: session, status } = useSession()
@@ -572,11 +573,11 @@ export default function UserDashboard() {
                           )}
                           {todo.dueDate && (
                             <p className={`text-xs mt-2 ${
-                              new Date(todo.dueDate) < new Date() && !todo.completed
+                              isOverdue(todo.dueDate) && !todo.completed
                                 ? 'text-red-600'
                                 : 'text-gray-500'
                             }`}>
-                              Due: {new Date(todo.dueDate).toLocaleDateString()}
+                              Due: {formatDisplayDate(todo.dueDate)}
                             </p>
                           )}
                         </div>

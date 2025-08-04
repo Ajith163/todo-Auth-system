@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/hooks/use-toast'
 import { pusherClient } from '@/lib/pusher'
 import { Users, CheckCircle, Clock, LogOut, Shield, Eye, Edit, Trash2, X, Circle, Lock } from 'lucide-react'
+import { formatDisplayDate, formatDateTime, isOverdue, getRelativeTime } from '@/lib/utils'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { UserSkeleton, AdminStatsSkeleton } from '@/components/ui/loading-skeleton'
 import { approveUser, rejectUser, switchUserRole, getAllUsers } from '@/app/actions/users'
@@ -665,14 +666,14 @@ export default function AdminDashboard() {
                               <span>By: {todo.userEmail}</span>
                               {todo.dueDate && (
                                 <span className={`${
-                                  new Date(todo.dueDate) < new Date() && !todo.completed
+                                  isOverdue(todo.dueDate) && !todo.completed
                                     ? 'text-red-600 font-medium'
                                     : 'text-gray-500'
                                 }`}>
-                                  Due: {new Date(todo.dueDate).toLocaleDateString()}
+                                  Due: {formatDisplayDate(todo.dueDate)}
                                 </span>
                               )}
-                              <span>Created: {new Date(todo.createdAt).toLocaleDateString()}</span>
+                              <span>Created: {formatDisplayDate(todo.createdAt)}</span>
                             </div>
                           </div>
                         </div>

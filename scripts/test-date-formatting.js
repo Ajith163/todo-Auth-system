@@ -1,12 +1,5 @@
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
-
-// Date formatting utility function
-export function formatDate(dateString, includeTime = true) {
+// Date formatting utility functions for testing
+function formatDate(dateString, includeTime = true) {
   try {
     const date = new Date(dateString)
     
@@ -37,18 +30,15 @@ export function formatDate(dateString, includeTime = true) {
   }
 }
 
-// Format date for display (without time)
-export function formatDisplayDate(dateString) {
+function formatDisplayDate(dateString) {
   return formatDate(dateString, false)
 }
 
-// Format date with time
-export function formatDateTime(dateString) {
+function formatDateTime(dateString) {
   return formatDate(dateString, true)
 }
 
-// Check if date is overdue
-export function isOverdue(dateString) {
+function isOverdue(dateString) {
   try {
     const date = new Date(dateString)
     const now = new Date()
@@ -58,8 +48,7 @@ export function isOverdue(dateString) {
   }
 }
 
-// Get relative time (e.g., "2 hours ago", "3 days ago")
-export function getRelativeTime(dateString) {
+function getRelativeTime(dateString) {
   try {
     const date = new Date(dateString)
     const now = new Date()
@@ -80,4 +69,47 @@ export function getRelativeTime(dateString) {
   } catch (error) {
     return 'Unknown time'
   }
-} 
+}
+
+console.log('🔍 Testing Date Formatting\n')
+
+// Test cases
+const testDates = [
+  '2025-12-12T10:30:45Z',
+  '2024-01-15T14:20:30Z',
+  '2023-06-08T09:15:22Z',
+  '2025-03-25T16:45:10Z',
+  new Date().toISOString(), // Current date
+  '2024-12-31T23:59:59Z',
+  '2023-02-28T12:00:00Z'
+]
+
+console.log('📅 Testing formatDisplayDate (without time):')
+testDates.forEach(date => {
+  console.log(`${date} → ${formatDisplayDate(date)}`)
+})
+
+console.log('\n⏰ Testing formatDateTime (with time):')
+testDates.forEach(date => {
+  console.log(`${date} → ${formatDateTime(date)}`)
+})
+
+console.log('\n🚨 Testing isOverdue:')
+testDates.forEach(date => {
+  const overdue = isOverdue(date)
+  console.log(`${date} → ${overdue ? 'OVERDUE' : 'Not overdue'}`)
+})
+
+console.log('\n⏱️  Testing getRelativeTime:')
+testDates.forEach(date => {
+  console.log(`${date} → ${getRelativeTime(date)}`)
+})
+
+console.log('\n🎯 Expected Format Examples:')
+console.log('• 12 Dec 2025 (display date)')
+console.log('• 12 Dec 2025 10:30:45 (with time)')
+console.log('• 15 Jan 2024 (display date)')
+console.log('• 15 Jan 2024 14:20:30 (with time)')
+
+console.log('\n✅ Date formatting test completed!')
+console.log('\n📝 The dates should now display in the format "12 Dec 2025" with proper timing.') 

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Edit, Trash2, CheckCircle, XCircle, Clock, User } from 'lucide-react'
+import { formatDisplayDate, formatDateTime, getRelativeTime } from '@/lib/utils'
 
 export default function UserManagementTabs({ 
   users = [], 
@@ -126,7 +127,7 @@ export default function UserManagementTabs({
                               </p>
                             </div>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                              Registered: {new Date(user.createdAt).toLocaleDateString()}
+                                                              Registered: {formatDisplayDate(user.createdAt)}
                             </p>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
                               Role: <span className="font-medium capitalize">{user.role}</span>
@@ -182,7 +183,7 @@ export default function UserManagementTabs({
                               </p>
                             </div>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                              Rejected: {new Date(user.createdAt).toLocaleDateString()}
+                                                              Rejected: {formatDisplayDate(user.createdAt)}
                             </p>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
                               Role: <span className="font-medium capitalize">{user.role}</span>
@@ -231,7 +232,7 @@ export default function UserManagementTabs({
                               Role: <span className="font-medium capitalize">{user.role}</span>
                             </p>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                              Joined: {new Date(user.createdAt).toLocaleDateString()}
+                                                              Joined: {formatDisplayDate(user.createdAt)}
                             </p>
                           </div>
                           <div className="flex items-center gap-2 ml-3">

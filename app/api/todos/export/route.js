@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { formatDisplayDate, formatDateTime } from '@/lib/utils'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getDatabase } from '@/lib/db'
@@ -61,11 +62,11 @@ export async function GET(request) {
       todo.title,
       todo.description || '',
       todo.completed ? 'Yes' : 'No',
-      todo.dueDate ? new Date(todo.dueDate).toLocaleDateString() : '',
+      todo.dueDate ? formatDisplayDate(todo.dueDate) : '',
       todo.priority || 'medium',
       todo.tags ? JSON.stringify(todo.tags) : '',
-      new Date(todo.createdAt).toLocaleDateString(),
-      new Date(todo.updatedAt).toLocaleDateString()
+      formatDisplayDate(todo.createdAt),
+      formatDisplayDate(todo.updatedAt)
     ])
 
     const csvContent = [
