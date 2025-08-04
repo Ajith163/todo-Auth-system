@@ -23,7 +23,9 @@
     "vercel-build": "node scripts/vercel-build-hook.js",
     "test-db": "node scripts/test-database-setup.js",
     "force-setup": "node scripts/force-database-setup.js",
-    "fix-admin": "node scripts/fix-admin-users.js"
+    "fix-admin": "node scripts/fix-admin-users.js",
+    "setup-admin": "node scripts/setup-default-admin.js",
+    "seed": "node scripts/seed-database.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
