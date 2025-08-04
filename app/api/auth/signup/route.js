@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
-import { db } from '@/lib/db'
+import { getDatabase } from '@/lib/db'
 import { users } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 
@@ -9,6 +9,9 @@ export async function POST(request) {
     const { email, password } = await request.json()
 
     console.log('Signup attempt for:', email)
+
+    // Get initialized database
+    const db = await getDatabase()
 
     // Check if user already exists
     const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1)

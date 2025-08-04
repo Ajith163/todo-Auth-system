@@ -19,28 +19,47 @@ NEXTAUTH_URL=https://your-app-name.vercel.app
 NEXTAUTH_SECRET=your_secret_key_here
 ```
 
-### Step 2: Run Database Setup
+### Step 2: Deploy with Automatic Database Setup
 
-After setting environment variables, run these commands:
+The application now includes automatic database setup during deployment. Simply deploy your code:
 
 ```bash
-# Option 1: Use the fix script (recommended)
-npm run fix-deployment
-
-# Option 2: Manual database setup
-npm run db:push
-npm run db:init
+git add .
+git commit -m "Fix database deployment with automatic setup"
+git push origin main
 ```
 
-### Step 3: Create Admin User
+The build process will automatically:
+- Check if database tables exist
+- Create tables if they don't exist
+- Set up the schema properly
+
+### Step 3: Create Admin User (Optional)
+
+After deployment, you can create an admin user:
 
 ```bash
 npm run create-admin admin@example.com admin123
 ```
 
+Or use the default admin credentials:
+- Email: admin@example.com
+- Password: admin123
+
 ## 🗄️ Database Setup Options
 
-### Option A: Using Drizzle Push (Recommended)
+### Option A: Automatic Setup (Recommended)
+
+The application now includes automatic database setup during deployment. The build process will:
+
+1. Check if database tables exist
+2. Create tables if they don't exist
+3. Apply migrations if needed
+4. Verify the setup
+
+This happens automatically when you deploy to Vercel.
+
+### Option B: Using Drizzle Push
 
 ```bash
 npm run db:push
@@ -48,7 +67,7 @@ npm run db:push
 
 This will create all tables based on your schema.
 
-### Option B: Using Migrations
+### Option C: Using Migrations
 
 ```bash
 npm run db:migrate
@@ -56,7 +75,7 @@ npm run db:migrate
 
 This will run the migration files in order.
 
-### Option C: Manual SQL
+### Option D: Manual SQL
 
 If the above options don't work, manually run these SQL commands in your database:
 

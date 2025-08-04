@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/vercel-build-hook.js && next build",
     "start": "next start",
     "lint": "next lint",
     "create-admin": "node scripts/create-admin.js",
@@ -19,7 +19,9 @@
     "db:studio": "drizzle-kit studio",
     "db:init": "node lib/db/init.js",
     "fix-deployment": "node scripts/fix-production-deployment.js",
-    "deploy": "node scripts/deploy-production.js"
+    "deploy": "node scripts/deploy-production.js",
+    "vercel-build": "node scripts/vercel-build-hook.js",
+    "test-db": "node scripts/test-database-setup.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
