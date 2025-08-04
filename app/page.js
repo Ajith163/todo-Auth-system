@@ -18,24 +18,24 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="max-w-7xl mx-auto px-4 py-16">
+      <div className="container-mobile max-w-7xl mx-auto py-8 sm:py-16">
         {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-6">
+        <div className="text-center mb-12 sm:mb-16">
+          <h1 className="text-mobile-xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
             Todo App
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+          <p className="text-mobile text-gray-600 dark:text-gray-300 mb-6 sm:mb-8 max-w-2xl mx-auto">
             A full-stack todo application with authentication, real-time notifications, 
             and role-based access control. Built with Next.js 14, Drizzle ORM, and shadcn/ui.
           </p>
-          <div className="flex gap-4 justify-center">
+          <div className="flex-mobile gap-4 justify-center">
             <Link href="/auth/signin">
-              <Button size="lg">
+              <Button size="lg" className="btn-mobile">
                 Sign In
               </Button>
             </Link>
             <Link href="/auth/signup">
-              <Button variant="outline" size="lg">
+              <Button variant="outline" size="lg" className="btn-mobile">
                 Sign Up
               </Button>
             </Link>
@@ -43,12 +43,12 @@ export default async function HomePage() {
         </div>
 
         {/* Features */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+        <div className="grid-mobile mb-12 sm:mb-16">
           <Card>
             <CardHeader>
               <CheckCircle className="w-8 h-8 text-green-600 mb-2" />
-              <CardTitle>Task Management</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-mobile-lg">Task Management</CardTitle>
+              <CardDescription className="text-mobile">
                 Create, update, and organize your todos with ease
               </CardDescription>
             </CardHeader>
@@ -57,8 +57,8 @@ export default async function HomePage() {
           <Card>
             <CardHeader>
               <Users className="w-8 h-8 text-blue-600 mb-2" />
-              <CardTitle>User Management</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-mobile-lg">User Management</CardTitle>
+              <CardDescription className="text-mobile">
                 Admin approval system with role-based access control
               </CardDescription>
             </CardHeader>
@@ -67,8 +67,8 @@ export default async function HomePage() {
           <Card>
             <CardHeader>
               <Zap className="w-8 h-8 text-yellow-600 mb-2" />
-              <CardTitle>Real-time Updates</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-mobile-lg">Real-time Updates</CardTitle>
+              <CardDescription className="text-mobile">
                 Get instant notifications when tasks are completed
               </CardDescription>
             </CardHeader>
@@ -77,8 +77,8 @@ export default async function HomePage() {
           <Card>
             <CardHeader>
               <Shield className="w-8 h-8 text-purple-600 mb-2" />
-              <CardTitle>Secure Authentication</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-mobile-lg">Secure Authentication</CardTitle>
+              <CardDescription className="text-mobile">
                 NextAuth.js with password hashing and session management
               </CardDescription>
             </CardHeader>
@@ -86,26 +86,26 @@ export default async function HomePage() {
         </div>
 
         {/* Tech Stack */}
-        <Card className="mb-16">
+        <Card className="mb-12 sm:mb-16">
           <CardHeader>
-            <CardTitle>Built with Modern Technologies</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-mobile-lg">Built with Modern Technologies</CardTitle>
+            <CardDescription className="text-mobile">
               This application is built using the latest web technologies
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid-mobile">
               <div className="text-center p-4 border rounded-lg">
                 <h3 className="font-semibold text-gray-900 dark:text-white">Next.js 14</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">App Router</p>
               </div>
               <div className="text-center p-4 border rounded-lg">
                 <h3 className="font-semibold text-gray-900 dark:text-white">Drizzle ORM</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">PostgreSQL</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Type-safe SQL</p>
               </div>
               <div className="text-center p-4 border rounded-lg">
-                <h3 className="font-semibold text-gray-900 dark:text-white">NextAuth.js</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Authentication</p>
+                <h3 className="font-semibold text-gray-900 dark:text-white">PostgreSQL</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Database</p>
               </div>
               <div className="text-center p-4 border rounded-lg">
                 <h3 className="font-semibold text-gray-900 dark:text-white">shadcn/ui</h3>
@@ -115,19 +115,63 @@ export default async function HomePage() {
           </CardContent>
         </Card>
 
-        {/* CTA */}
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            Ready to get started?
-          </h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-8">
-            Create an account and start managing your tasks today
-          </p>
-          <Link href="/auth/signup">
-            <Button size="lg">
-              Get Started
-            </Button>
-          </Link>
+        {/* Features List */}
+        <div className="grid-mobile">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-mobile-lg">Authentication</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                <li>• Email/password authentication</li>
+                <li>• Admin approval system</li>
+                <li>• Role-based access control</li>
+                <li>• Secure session management</li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-mobile-lg">Todo Management</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                <li>• Create, read, update, delete todos</li>
+                <li>• Filter by status and priority</li>
+                <li>• Due date tracking</li>
+                <li>• Real-time updates</li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-mobile-lg">Admin Dashboard</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                <li>• User management</li>
+                <li>• Approval/rejection system</li>
+                <li>• Statistics and analytics</li>
+                <li>• Todo monitoring</li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-mobile-lg">Real-time Features</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                <li>• Live notifications</li>
+                <li>• Instant updates</li>
+                <li>• Pusher integration</li>
+                <li>• Cross-device sync</li>
+              </ul>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

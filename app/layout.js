@@ -34,8 +34,6 @@ export default async function RootLayout({ children }) {
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
           rel="stylesheet"
-          media="print"
-          onLoad="this.media='all'"
         />
         <noscript>
           <link

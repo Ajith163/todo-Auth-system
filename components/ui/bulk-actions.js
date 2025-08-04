@@ -1,17 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { CheckSquare, Square, Trash2, CheckCircle, Circle, Download, MoreHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
+import { CheckCircle, Trash2, Download, Filter } from 'lucide-react'
 
-export function BulkActions({ todos, onBulkUpdate, onBulkDelete, onExport, className = '' }) {
+export default function BulkActions({ todos, onBulkUpdate, onBulkDelete, onExport }) {
   const [selectedTodos, setSelectedTodos] = useState([])
-  const [showActions, setShowActions] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
 
-  const toggleSelectAll = () => {
+  const handleSelectAll = () => {
     if (selectedTodos.length === todos.length) {
       setSelectedTodos([])
     } else {
@@ -19,253 +19,213 @@ export function BulkActions({ todos, onBulkUpdate, onBulkDelete, onExport, class
     }
   }
 
-  const toggleSelectTodo = (todoId) => {
-    setSelectedTodos(prev => 
-      prev.includes(todoId) 
-        ? prev.filter(id => id !== todoId)
-        : [...prev, todoId]
-    )
+  const handleSelectTodo = (todoId) => {
+    if (selectedTodos.includes(todoId)) {
+      setSelectedTodos(selectedTodos.filter(id => id !== todoId))
+    } else {
+      setSelectedTodos([...selectedTodos, todoId])
+    }
   }
 
-  const handleBulkAction = async (action) => {
+  const handleBulkComplete = async () => {
     if (selectedTodos.length === 0) {
       toast({
         title: 'No todos selected',
-        description: 'Please select at least one todo to perform this action.',
+        description: 'Please select todos to mark as complete',
         variant: 'destructive',
       })
       return
     }
 
+    setIsLoading(true)
     try {
-      let result
-      switch (action) {
-        case 'complete':
-          result = await onBulkUpdate({
-            todoIds: selectedTodos,
-            action: 'complete'
-          })
-          break
-        case 'incomplete':
-          result = await onBulkUpdate({
-            todoIds: selectedTodos,
-            action: 'incomplete'
-          })
-          break
-        case 'delete':
-          result = await onBulkDelete(selectedTodos)
-          break
-        case 'export':
-          result = await onExport(selectedTodos)
-          break
-      }
-
-      if (result?.success) {
-        toast({
-          title: 'Success',
-          description: result.message || `Successfully performed ${action} on ${selectedTodos.length} todos`,
-        })
-        setSelectedTodos([])
-        setShowActions(false)
-      } else {
-        toast({
-          title: 'Error',
-          description: result?.error || `Failed to perform ${action}`,
-          variant: 'destructive',
-        })
-      }
+      await onBulkUpdate(selectedTodos, true)
+      setSelectedTodos([])
+      toast({
+        title: 'Success',
+        description: `${selectedTodos.length} todos marked as complete`,
+      })
     } catch (error) {
       toast({
         title: 'Error',
-        description: `Failed to perform ${action}`,
+        description: 'Failed to update todos',
         variant: 'destructive',
       })
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'high': return 'text-red-600 bg-red-100 dark:bg-red-900/20'
-      case 'medium': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20'
-      case 'low': return 'text-green-600 bg-green-100 dark:bg-green-900/20'
-      default: return 'text-gray-600 bg-gray-100 dark:bg-gray-900/20'
+  const handleBulkIncomplete = async () => {
+    if (selectedTodos.length === 0) {
+      toast({
+        title: 'No todos selected',
+        description: 'Please select todos to mark as incomplete',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      await onBulkUpdate(selectedTodos, false)
+      setSelectedTodos([])
+      toast({
+        title: 'Success',
+        description: `${selectedTodos.length} todos marked as incomplete`,
+      })
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update todos',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  if (todos.length === 0) {
-    return null
+  const handleBulkDelete = async () => {
+    if (selectedTodos.length === 0) {
+      toast({
+        title: 'No todos selected',
+        description: 'Please select todos to delete',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (!confirm(`Are you sure you want to delete ${selectedTodos.length} todos?`)) {
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      await onBulkDelete(selectedTodos)
+      setSelectedTodos([])
+      toast({
+        title: 'Success',
+        description: `${selectedTodos.length} todos deleted`,
+      })
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete todos',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleExport = async () => {
+    setIsLoading(true)
+    try {
+      await onExport()
+      toast({
+        title: 'Success',
+        description: 'Todos exported successfully',
+      })
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to export todos',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <div className={`space-y-4 ${className}`}>
-      {/* Bulk Actions Bar */}
-      {selectedTodos.length > 0 && (
-        <Card className="bg-primary/5 border-primary/20">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-medium">
-                  {selectedTodos.length} of {todos.length} selected
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Filter className="w-5 h-5" />
+          Bulk Actions
+        </CardTitle>
+        <CardDescription>
+          Select multiple todos to perform bulk operations
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {/* Selection Controls */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={selectedTodos.length === todos.length && todos.length > 0}
+                  onChange={handleSelectAll}
+                  className="rounded border-gray-300"
+                />
+                <span className="text-sm">
+                  Select All ({selectedTodos.length}/{todos.length})
                 </span>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => handleBulkAction('complete')}
-                    className="flex items-center gap-2"
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                    Mark Complete
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleBulkAction('incomplete')}
-                    className="flex items-center gap-2"
-                  >
-                    <Circle className="w-4 h-4" />
-                    Mark Incomplete
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleBulkAction('export')}
-                    className="flex items-center gap-2"
-                  >
-                    <Download className="w-4 h-4" />
-                    Export
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleBulkAction('delete')}
-                    className="flex items-center gap-2"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
-                  </Button>
-                </div>
+              </label>
+            </div>
+            
+            {selectedTodos.length > 0 && (
+              <div className="text-sm text-gray-600">
+                {selectedTodos.length} selected
               </div>
+            )}
+          </div>
+
+          {/* Bulk Action Buttons */}
+          {selectedTodos.length > 0 && (
+            <div className="flex flex-wrap gap-2">
               <Button
+                onClick={handleBulkComplete}
+                disabled={isLoading}
+                variant="outline"
                 size="sm"
-                variant="ghost"
-                onClick={() => setSelectedTodos([])}
+                className="flex items-center gap-2"
               >
-                Clear Selection
+                <CheckCircle className="w-4 h-4" />
+                Mark Complete
+              </Button>
+              
+              <Button
+                onClick={handleBulkIncomplete}
+                disabled={isLoading}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Filter className="w-4 h-4" />
+                Mark Incomplete
+              </Button>
+              
+              <Button
+                onClick={handleBulkDelete}
+                disabled={isLoading}
+                variant="destructive"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete Selected
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Todo List */}
-      <div className="space-y-2">
-        {todos.map((todo) => (
-          <Card
-            key={todo.id}
-            className={`transition-colors ${
-              selectedTodos.includes(todo.id) 
-                ? 'border-primary bg-primary/5' 
-                : ''
-            }`}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => toggleSelectTodo(todo.id)}
-                  className="flex-shrink-0"
-                >
-                  {selectedTodos.includes(todo.id) ? (
-                    <CheckSquare className="w-5 h-5 text-primary" />
-                  ) : (
-                    <Square className="w-5 h-5 text-muted-foreground" />
-                  )}
-                </button>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <h3 className={`font-medium ${todo.completed ? 'line-through text-muted-foreground' : ''}`}>
-                        {todo.title}
-                      </h3>
-                      {todo.description && (
-                        <p className={`text-sm text-muted-foreground mt-1 ${todo.completed ? 'line-through' : ''}`}>
-                          {todo.description}
-                        </p>
-                      )}
-                      
-                      {/* Tags */}
-                      {todo.tags && todo.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {todo.tags.map((tag, index) => (
-                            <span
-                              key={index}
-                              className="inline-flex items-center px-2 py-1 text-xs bg-primary/10 text-primary rounded-md"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2 ml-4">
-                      {/* Priority Badge */}
-                      <span className={`px-2 py-1 text-xs rounded-full ${getPriorityColor(todo.priority)}`}>
-                        {todo.priority}
-                      </span>
-
-                      {/* Due Date */}
-                      {todo.dueDate && (
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          new Date(todo.dueDate) < new Date() && !todo.completed
-                            ? 'text-red-600 bg-red-100 dark:bg-red-900/20'
-                            : 'text-muted-foreground bg-muted'
-                        }`}>
-                          {new Date(todo.dueDate).toLocaleDateString()}
-                        </span>
-                      )}
-
-                      {/* Status */}
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        todo.completed
-                          ? 'text-green-600 bg-green-100 dark:bg-green-900/20'
-                          : 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20'
-                      }`}>
-                        {todo.completed ? 'Completed' : 'Pending'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Select All Button */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={toggleSelectAll}
-          className="flex items-center gap-2"
-        >
-          {selectedTodos.length === todos.length ? (
-            <CheckSquare className="w-4 h-4" />
-          ) : (
-            <Square className="w-4 h-4" />
           )}
-          {selectedTodos.length === todos.length ? 'Deselect All' : 'Select All'}
-        </Button>
 
-        <Button
-          variant="outline"
-          onClick={() => setShowActions(!showActions)}
-          className="flex items-center gap-2"
-        >
-          <MoreHorizontal className="w-4 h-4" />
-          Actions
-        </Button>
-      </div>
-    </div>
+          {/* Export Button */}
+          <div className="flex justify-end">
+            <Button
+              onClick={handleExport}
+              disabled={isLoading || todos.length === 0}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Export All
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 } 

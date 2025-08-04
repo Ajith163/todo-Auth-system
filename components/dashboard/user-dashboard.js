@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/hooks/use-toast'
 import { pusherClient } from '@/lib/pusher'
-import { CheckCircle, Circle, Plus, LogOut, User } from 'lucide-react'
+import { CheckCircle, Circle, Plus, LogOut, User, Trash2 } from 'lucide-react'
 import { todoFormSchema } from '@/lib/validations/todo'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { TodoSkeleton, StatsSkeleton, FormSkeleton } from '@/components/ui/loading-skeleton'
@@ -108,7 +108,6 @@ export default function UserDashboard() {
         })
       }
     } catch (error) {
-      console.error('Error fetching todos:', error)
       toast({
         title: 'Error',
         description: 'Failed to fetch todos',
@@ -178,7 +177,6 @@ export default function UserDashboard() {
         })
       }
     } catch (error) {
-      console.error('Error updating todo:', error)
       toast({
         title: 'Error',
         description: 'Failed to update todo',
@@ -230,7 +228,6 @@ export default function UserDashboard() {
         redirect: true 
       })
     } catch (error) {
-      console.error('Signout error:', error)
       // Fallback: redirect manually
       window.location.href = '/auth/signin'
     }
@@ -242,18 +239,18 @@ export default function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="container-mobile max-w-4xl mx-auto py-4 sm:py-8">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <div className="flex-mobile justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
+          <div className="flex-1">
+            <h1 className="text-mobile-xl font-bold text-gray-900 dark:text-white">
               My Todo Dashboard
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">
+            <p className="text-mobile text-gray-600 dark:text-gray-400 mt-2">
               Welcome back, {session?.user?.email}
             </p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="nav-mobile">
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               <User className="w-4 h-4" />
               {session?.user?.role}
@@ -262,9 +259,10 @@ export default function UserDashboard() {
             <Button
               variant="outline"
               onClick={handleSignOut}
+              className="btn-mobile"
             >
               <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
+              <span className="mobile-hidden">Sign Out</span>
             </Button>
           </div>
         </div>
@@ -273,43 +271,43 @@ export default function UserDashboard() {
         {isInitialLoading ? (
           <StatsSkeleton />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                         <Card>
-               <CardContent className="p-6">
-                 <div className="flex items-center justify-between">
-                   <div>
-                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                       Total Tasks
-                     </p>
-                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                       {totalCount}
-                     </p>
-                   </div>
-                                       <div className="text-blue-600">
-                      <span className="text-2xl">•</span>
-                    </div>
-                 </div>
-               </CardContent>
-             </Card>
-                         <Card>
-               <CardContent className="p-6">
-                 <div className="flex items-center justify-between">
-                   <div>
-                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                       Completed
-                     </p>
-                     <p className="text-2xl font-bold text-green-600">
-                       {completedCount}
-                     </p>
-                   </div>
-                   <div className="text-green-600">
-                     <CheckCircle className="w-8 h-8" />
-                   </div>
-                 </div>
-               </CardContent>
-             </Card>
+          <div className="stats-mobile mb-6 sm:mb-8">
             <Card>
-              <CardContent className="p-6">
+              <CardContent className="card-mobile">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Total Tasks
+                    </p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {totalCount}
+                    </p>
+                  </div>
+                  <div className="text-blue-600">
+                    <span className="text-2xl">•</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="card-mobile">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Completed
+                    </p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {completedCount}
+                    </p>
+                  </div>
+                  <div className="text-green-600">
+                    <CheckCircle className="w-8 h-8" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="card-mobile">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -329,81 +327,82 @@ export default function UserDashboard() {
         {isInitialLoading ? (
           <FormSkeleton />
         ) : (
-          <Card className="mb-8">
+          <Card className="mb-6 sm:mb-8">
             <CardHeader>
-              <CardTitle>Add New Todo</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-mobile-lg">Add New Todo</CardTitle>
+              <CardDescription className="text-mobile">
                 Create a new task to track your progress
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={form.handleSubmit(addTodo)} className="space-y-4">
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Title *
-                  </label>
-                  <Input
-                    id="title"
-                    {...form.register('title')}
-                    placeholder="Enter todo title..."
-                    disabled={isLoading}
-                    className={form.formState.errors.title ? 'border-red-500' : ''}
-                  />
-                  {form.formState.errors.title && (
-                    <p className="text-red-500 text-sm mt-1">{form.formState.errors.title.message}</p>
-                  )}
+              <form onSubmit={form.handleSubmit(addTodo)} className="form-mobile">
+                <div className="flex-mobile gap-4">
+                  <div className="flex-1">
+                    <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Title *
+                    </label>
+                    <Input
+                      id="title"
+                      {...form.register('title')}
+                      placeholder="Enter todo title..."
+                      disabled={isLoading}
+                      className={`input-mobile ${form.formState.errors.title ? 'border-red-500' : ''}`}
+                    />
+                    {form.formState.errors.title && (
+                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.title.message}</p>
+                    )}
+                  </div>
+                  <div className="flex items-end">
+                    <Button 
+                      type="submit" 
+                      disabled={isLoading || !form.watch('title') || !form.watch('description')}
+                      className="btn-mobile"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      {isLoading ? 'Adding...' : 'Add Todo'}
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-end">
-                  <Button 
-                    type="submit" 
-                    disabled={isLoading || !form.watch('title') || !form.watch('description')}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    {isLoading ? 'Adding...' : 'Add Todo'}
-                  </Button>
+                <div className="grid-mobile">
+                  <div>
+                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Description *
+                    </label>
+                    <textarea
+                      id="description"
+                      {...form.register('description')}
+                      placeholder="Enter todo description..."
+                      disabled={isLoading}
+                      className={`input-mobile resize-none ${
+                        form.formState.errors.description ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      rows="3"
+                    />
+                    {form.formState.errors.description && (
+                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.description.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Due Date (Optional)
+                    </label>
+                    <input
+                      id="dueDate"
+                      type="datetime-local"
+                      {...form.register('dueDate')}
+                      disabled={isLoading}
+                      className={`input-mobile ${
+                        form.formState.errors.dueDate ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {form.formState.errors.dueDate && (
+                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.dueDate.message}</p>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Description *
-                  </label>
-                  <textarea
-                    id="description"
-                    {...form.register('description')}
-                    placeholder="Enter todo description..."
-                    disabled={isLoading}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-400 resize-none ${
-                      form.formState.errors.description ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    rows="3"
-                  />
-                  {form.formState.errors.description && (
-                    <p className="text-red-500 text-sm mt-1">{form.formState.errors.description.message}</p>
-                  )}
-                </div>
-                <div>
-                  <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Due Date (Optional)
-                  </label>
-                  <input
-                    id="dueDate"
-                    type="datetime-local"
-                    {...form.register('dueDate')}
-                    disabled={isLoading}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-400 ${
-                      form.formState.errors.dueDate ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                  {form.formState.errors.dueDate && (
-                    <p className="text-red-500 text-sm mt-1">{form.formState.errors.dueDate.message}</p>
-                  )}
-                </div>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+              </form>
+            </CardContent>
+          </Card>
         )}
 
         {/* Filter */}
@@ -411,28 +410,32 @@ export default function UserDashboard() {
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
             Click the circle button to toggle task completion
           </p>
-          <div className="flex gap-2">
-                      <Button
+          <div className="flex flex-wrap gap-2">
+            <Button
               variant={filter === 'all' ? 'default' : 'outline'}
               onClick={() => setFilter('all')}
+              className="btn-mobile"
             >
               All ({totalCount})
             </Button>
             <Button
               variant={filter === 'pending' ? 'default' : 'outline'}
               onClick={() => setFilter('pending')}
+              className="btn-mobile"
             >
               Pending ({totalCount - completedCount})
             </Button>
             <Button
               variant={filter === 'overdue' ? 'default' : 'outline'}
               onClick={() => setFilter('overdue')}
+              className="btn-mobile"
             >
               Overdue ({todos.filter(todo => !todo.completed && todo.dueDate && new Date(todo.dueDate) < new Date()).length})
             </Button>
             <Button
               variant={filter === 'completed' ? 'default' : 'outline'}
               onClick={() => setFilter('completed')}
+              className="btn-mobile"
             >
               Completed ({completedCount})
             </Button>
@@ -440,7 +443,7 @@ export default function UserDashboard() {
         </div>
 
         {/* Todos List */}
-        <div className="space-y-4">
+        <div className="space-mobile">
           {isInitialLoading ? (
             // Show loading skeletons
             Array.from({ length: 3 }).map((_, index) => (
@@ -448,68 +451,70 @@ export default function UserDashboard() {
             ))
           ) : filteredTodos.length === 0 ? (
             <Card>
-              <CardContent className="p-8 text-center">
+              <CardContent className="card-mobile text-center">
                 <p className="text-gray-500 dark:text-gray-400">
                   {filter === 'all' 
-                    ? 'No todos yet. Create your first one!' 
-                    : `No ${filter} todos.`}
+                    ? 'No todos yet. Create your first todo above!'
+                    : filter === 'completed'
+                    ? 'No completed todos yet.'
+                    : filter === 'pending'
+                    ? 'No pending todos. Great job!'
+                    : 'No overdue todos. Keep it up!'}
                 </p>
               </CardContent>
             </Card>
           ) : (
             filteredTodos.map((todo) => (
-              <Card key={todo.id} className={`transition-all ${todo.completed ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 flex-1">
-                      <button
-                        onClick={() => handleToggleTodo(todo.id, todo.completed)}
-                        className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${
-                          todo.completed 
-                            ? 'bg-green-100 dark:bg-green-800 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-700' 
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                        }`}
-                        title={todo.completed ? 'Mark as incomplete' : 'Mark as complete'}
-                      >
-                        {todo.completed ? (
-                          <CheckCircle className="w-5 h-5" />
-                        ) : (
-                          <Circle className="w-5 h-5" />
-                        )}
-                      </button>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className={`font-medium ${todo.completed ? 'line-through text-gray-500' : 'text-gray-900 dark:text-white'}`}>
+              <Card key={todo.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="card-mobile">
+                  <div className="flex items-start gap-3">
+                    <button
+                      onClick={() => handleToggleTodo(todo.id, !todo.completed)}
+                      className="flex-shrink-0 touch-friendly mt-1"
+                      disabled={isLoading}
+                    >
+                      {todo.completed ? (
+                        <CheckCircle className="w-6 h-6 text-green-600" />
+                      ) : (
+                        <Circle className="w-6 h-6 text-gray-400 hover:text-gray-600" />
+                      )}
+                    </button>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex-mobile justify-between items-start gap-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className={`text-mobile font-medium ${todo.completed ? 'line-through text-gray-500' : 'text-gray-900 dark:text-white'}`}>
                             {todo.title}
                           </h3>
+                          {todo.description && (
+                            <p className={`text-sm text-gray-600 dark:text-gray-400 mt-1 ${todo.completed ? 'line-through' : ''}`}>
+                              {todo.description}
+                            </p>
+                          )}
+                          {todo.dueDate && (
+                            <p className={`text-xs mt-2 ${
+                              new Date(todo.dueDate) < new Date() && !todo.completed
+                                ? 'text-red-600'
+                                : 'text-gray-500'
+                            }`}>
+                              Due: {new Date(todo.dueDate).toLocaleDateString()}
+                            </p>
+                          )}
                         </div>
-                        {todo.description && (
-                          <p className={`text-sm mt-1 ${todo.completed ? 'text-gray-500 line-through' : 'text-gray-600 dark:text-gray-400'}`}>
-                            {todo.description}
-                          </p>
-                        )}
-                                                 <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                           <span>Created: {new Date(todo.createdAt).toLocaleDateString()}</span>
-                           {todo.dueDate && (
-                             <span className={`${
-                               new Date(todo.dueDate) < new Date() && !todo.completed 
-                                 ? 'text-red-600 font-medium' 
-                                 : 'text-gray-500'
-                             }`}>
-                               Due: {new Date(todo.dueDate).toLocaleString()}
-                             </span>
-                           )}
-                         </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteTodo(todo.id)}
+                            disabled={isLoading}
+                            className="touch-friendly"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteTodo(todo.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      Delete
-                    </Button>
                   </div>
                 </CardContent>
               </Card>

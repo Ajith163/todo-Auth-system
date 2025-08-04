@@ -26,7 +26,9 @@
     "fix-admin": "node scripts/fix-admin-users.js",
     "setup-admin": "node scripts/setup-default-admin.js",
     "seed": "node scripts/seed-database.js",
-    "test-delete": "node scripts/test-delete-user.js"
+    "test-delete": "node scripts/test-delete-user.js",
+    "setup-prod": "node scripts/setup-production-db.js",
+    "test-all": "node scripts/test-all-functionality.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

@@ -1,34 +1,51 @@
-import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { db } from '@/lib/db'
-import { todos, users } from '@/lib/db/schema'
-import { eq } from 'drizzle-orm'
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { getDatabase } from '@/lib/db';
+import { todos, users } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
+    // Check if user is authenticated and is admin
+    const session = await getServerSession(authOptions);
     
-    if (!session || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get all todos with user information
-    const allTodos = await db.select({
-      id: todos.id,
-      title: todos.title,
-      description: todos.description,
-      completed: todos.completed,
-      createdAt: todos.createdAt,
-      updatedAt: todos.updatedAt,
-      userEmail: users.email,
-    }).from(todos)
-    .leftJoin(users, eq(todos.userId, users.id))
-    .orderBy(todos.createdAt)
+    if (session.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
+    }
 
-    return NextResponse.json({ todos: allTodos })
+    const db = await getDatabase();
+
+    // Get all todos with user information
+    const allTodos = await db
+      .select({
+        id: todos.id,
+        title: todos.title,
+        description: todos.description,
+        completed: todos.completed,
+        dueDate: todos.dueDate,
+        tags: todos.tags,
+        priority: todos.priority,
+        createdAt: todos.createdAt,
+        updatedAt: todos.updatedAt,
+        userEmail: users.email,
+        userId: users.id
+      })
+      .from(todos)
+      .leftJoin(users, eq(todos.userId, users.id))
+      .orderBy(todos.createdAt);
+
+    return NextResponse.json({ 
+      todos: allTodos,
+      total: allTodos.length
+    });
+
   } catch (error) {
-    console.error('Error fetching todos:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Error fetching admin todos:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 } 
