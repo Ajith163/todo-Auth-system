@@ -7,11 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/hooks/use-toast'
 import { pusherClient } from '@/lib/pusher'
-import { Users, CheckCircle, Clock, LogOut, Shield, Eye, Edit, Trash2, X, Circle } from 'lucide-react'
+import { Users, CheckCircle, Clock, LogOut, Shield, Eye, Edit, Trash2, X, Circle, Lock } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { UserSkeleton, AdminStatsSkeleton } from '@/components/ui/loading-skeleton'
 import { approveUser, rejectUser, switchUserRole, getAllUsers } from '@/app/actions/users'
 import UserManagementTabs from './user-management-tabs'
+import UserEditModal from './user-edit-modal'
+import PasswordChangeModal from './password-change-modal'
 
 export default function AdminDashboard() {
   const { data: session } = useSession()
@@ -20,6 +22,9 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(false)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('pending') // 'pending', 'rejected', 'approved'
+  const [editingUser, setEditingUser] = useState(null)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -175,9 +180,6 @@ export default function AdminDashboard() {
   }
 
   // CRUD operations for approved users
-  const [editingUser, setEditingUser] = useState(null)
-  const [showEditForm, setShowEditForm] = useState(false)
-
   const updateUser = async (userId, userData) => {
     setIsLoading(true)
     try {
@@ -191,7 +193,7 @@ export default function AdminDashboard() {
 
       if (response.ok) {
         fetchUsers()
-        setShowEditForm(false)
+        setShowEditModal(false)
         setEditingUser(null)
         
         // Check if the updated user is the current user
@@ -226,6 +228,13 @@ export default function AdminDashboard() {
             description: 'User updated successfully!',
           })
         }
+      } else {
+        const errorData = await response.json()
+        toast({
+          title: 'Error',
+          description: errorData.error || 'Failed to update user.',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       toast({
@@ -275,10 +284,42 @@ export default function AdminDashboard() {
 
   const handleEditUser = (user) => {
     setEditingUser(user)
-    setShowEditForm(true)
+    setShowEditModal(true)
   }
 
+  const handleCloseEditModal = () => {
+    setShowEditModal(false)
+    setEditingUser(null)
+  }
 
+  const handlePasswordChange = async (passwordData) => {
+    try {
+      const response = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        toast({
+          title: 'Success',
+          description: 'Password changed successfully!',
+        })
+        setShowPasswordModal(false)
+      } else {
+        throw new Error(result.error || 'Failed to change password')
+      }
+    } catch (error) {
+      throw error
+    }
+  }
 
   const handleSignOut = async () => {
     try {
@@ -296,9 +337,14 @@ export default function AdminDashboard() {
     window.location.href = '/auth/signout'
   }
 
-  const pendingUsers = Array.isArray(users) ? users.filter(user => user && !user.approved && !user.rejected) : []
-  const approvedUsers = Array.isArray(users) ? users.filter(user => user && user.approved && !user.rejected) : []
-  const rejectedUsers = Array.isArray(users) ? users.filter(user => user && user.rejected) : []
+  // Filter out default admin user
+  const filterOutDefaultAdmin = (userList) => {
+    return userList.filter(user => user.email !== 'admin@example.com')
+  }
+
+  const pendingUsers = filterOutDefaultAdmin(Array.isArray(users) ? users.filter(user => user && !user.approved && !user.rejected) : [])
+  const approvedUsers = filterOutDefaultAdmin(Array.isArray(users) ? users.filter(user => user && user.approved && !user.rejected) : [])
+  const rejectedUsers = filterOutDefaultAdmin(Array.isArray(users) ? users.filter(user => user && user.rejected) : [])
   const completedTodos = Array.isArray(todos) ? todos.filter(todo => todo && todo.completed) : []
   const totalTodos = Array.isArray(todos) ? todos.length : 0
 
@@ -323,6 +369,14 @@ export default function AdminDashboard() {
             <ThemeToggle />
             <Button
               variant="outline"
+              onClick={() => setShowPasswordModal(true)}
+              className="btn-mobile"
+            >
+              <Lock className="w-4 h-4 mr-2" />
+              <span className="mobile-hidden">Change Password</span>
+            </Button>
+            <Button
+              variant="outline"
               onClick={handleSignOut}
               className="btn-mobile"
             >
@@ -344,9 +398,9 @@ export default function AdminDashboard() {
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                       Total Users
                     </p>
-                                         <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                       {Array.isArray(users) ? users.length : 0}
-                     </p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {Array.isArray(users) ? users.length : 0}
+                    </p>
                   </div>
                   <Users className="w-8 h-8 text-blue-600" />
                 </div>
@@ -359,9 +413,9 @@ export default function AdminDashboard() {
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                       Pending Approvals
                     </p>
-                                         <p className="text-2xl font-bold text-orange-600">
-                       {Array.isArray(pendingUsers) ? pendingUsers.length : 0}
-                     </p>
+                    <p className="text-2xl font-bold text-orange-600">
+                      {pendingUsers.length}
+                    </p>
                   </div>
                   <Clock className="w-8 h-8 text-orange-600" />
                 </div>
@@ -374,9 +428,9 @@ export default function AdminDashboard() {
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                       Rejected Users
                     </p>
-                                         <p className="text-2xl font-bold text-red-600">
-                       {Array.isArray(rejectedUsers) ? rejectedUsers.length : 0}
-                     </p>
+                    <p className="text-2xl font-bold text-red-600">
+                      {rejectedUsers.length}
+                    </p>
                   </div>
                   <X className="w-8 h-8 text-red-600" />
                 </div>
@@ -389,9 +443,9 @@ export default function AdminDashboard() {
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                       Total Todos
                     </p>
-                                         <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                       {Array.isArray(todos) ? todos.length : 0}
-                     </p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {Array.isArray(todos) ? todos.length : 0}
+                    </p>
                   </div>
                   <Eye className="w-8 h-8 text-purple-600" />
                 </div>
@@ -404,9 +458,9 @@ export default function AdminDashboard() {
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                       Completion Rate
                     </p>
-                                         <p className="text-2xl font-bold text-green-600">
-                       {Array.isArray(todos) && todos.length > 0 ? Math.round((completedTodos.length / todos.length) * 100) : 0}%
-                     </p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {Array.isArray(todos) && todos.length > 0 ? Math.round((completedTodos.length / todos.length) * 100) : 0}%
+                    </p>
                   </div>
                   <CheckCircle className="w-8 h-8 text-green-600" />
                 </div>
@@ -434,6 +488,23 @@ export default function AdminDashboard() {
           />
         </div>
 
+        {/* User Edit Modal */}
+        <UserEditModal
+          user={editingUser}
+          isOpen={showEditModal}
+          onClose={handleCloseEditModal}
+          onSave={updateUser}
+          isLoading={isLoading}
+        />
+
+        {/* Password Change Modal */}
+        <PasswordChangeModal
+          isOpen={showPasswordModal}
+          onClose={() => setShowPasswordModal(false)}
+          onSave={handlePasswordChange}
+          isLoading={isLoading}
+        />
+
         {/* Todos Section */}
         <div className="mt-8">
           <Card>
@@ -445,13 +516,13 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="table-mobile">
-                                 {(!Array.isArray(todos) || todos.length === 0) ? (
+                {(!Array.isArray(todos) || todos.length === 0) ? (
                   <p className="text-center text-gray-500 dark:text-gray-400 py-8">
                     No todos found
                   </p>
                 ) : (
-                                     <div className="space-mobile">
-                     {(Array.isArray(todos) ? todos : []).map((todo) => (
+                  <div className="space-mobile">
+                    {(Array.isArray(todos) ? todos : []).map((todo) => (
                       <div
                         key={todo.id}
                         className={`p-4 rounded-lg border ${

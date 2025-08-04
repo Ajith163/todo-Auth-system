@@ -10,10 +10,13 @@ import { revalidatePath } from 'next/cache'
 
 export async function createTodo(formData) {
   try {
+    console.log('🔍 Creating todo - checking session...')
     const session = await getServerSession(authOptions)
+    console.log('Session data:', session ? { id: session.user?.id, email: session.user?.email, role: session.user?.role } : 'No session')
     
-    if (!session) {
-      return { error: 'Unauthorized' }
+    if (!session || !session.user || !session.user.id) {
+      console.error('❌ No valid session found')
+      return { error: 'Unauthorized - Please log in again' }
     }
 
     // Parse and validate form data
@@ -25,12 +28,20 @@ export async function createTodo(formData) {
       priority: formData.get('priority') || 'medium',
     }
 
+    console.log('📝 Raw form data:', rawData)
+
     const validatedData = todoFormSchema.parse(rawData)
+    console.log('✅ Validated data:', validatedData)
 
     // Convert dueDate string to Date object if provided
     const dueDate = validatedData.dueDate ? new Date(validatedData.dueDate) : null
 
-    const newTodo = await db.insert(todos).values({
+    // Ensure database is available
+    const database = await getDatabase()
+    
+    console.log('💾 Inserting todo with userId:', session.user.id)
+
+    const newTodo = await database.insert(todos).values({
       title: validatedData.title,
       description: validatedData.description,
       dueDate: dueDate,
@@ -40,22 +51,27 @@ export async function createTodo(formData) {
       completed: false,
     }).returning()
 
+    console.log('✅ Todo created successfully:', newTodo[0])
+
     revalidatePath('/dashboard')
     return { success: true, todo: newTodo[0] }
   } catch (error) {
+    console.error('❌ Create todo error:', error)
     if (error.name === 'ZodError') {
       return { error: 'Validation failed', details: error.errors }
     }
-    return { error: 'Failed to create todo' }
+    return { error: 'Failed to create todo: ' + error.message }
   }
 }
 
 export async function updateTodo(todoId, updates) {
   try {
+    console.log('🔍 Updating todo - checking session...')
     const session = await getServerSession(authOptions)
     
-    if (!session) {
-      return { error: 'Unauthorized' }
+    if (!session || !session.user || !session.user.id) {
+      console.error('❌ No valid session found')
+      return { error: 'Unauthorized - Please log in again' }
     }
 
     // Validate updates
@@ -66,7 +82,9 @@ export async function updateTodo(todoId, updates) {
       validatedUpdates.dueDate = new Date(validatedUpdates.dueDate)
     }
 
-    const updatedTodo = await db.update(todos)
+    const database = await getDatabase()
+    
+    const updatedTodo = await database.update(todos)
       .set(validatedUpdates)
       .where(
         and(
@@ -83,22 +101,27 @@ export async function updateTodo(todoId, updates) {
     revalidatePath('/dashboard')
     return { success: true, todo: updatedTodo[0] }
   } catch (error) {
+    console.error('❌ Update todo error:', error)
     if (error.name === 'ZodError') {
       return { error: 'Validation failed', details: error.errors }
     }
-    return { error: 'Failed to update todo' }
+    return { error: 'Failed to update todo: ' + error.message }
   }
 }
 
 export async function deleteTodo(todoId) {
   try {
+    console.log('🔍 Deleting todo - checking session...')
     const session = await getServerSession(authOptions)
     
-    if (!session) {
-      return { error: 'Unauthorized' }
+    if (!session || !session.user || !session.user.id) {
+      console.error('❌ No valid session found')
+      return { error: 'Unauthorized - Please log in again' }
     }
 
-    const deletedTodo = await db.delete(todos)
+    const database = await getDatabase()
+    
+    const deletedTodo = await database.delete(todos)
       .where(
         and(
           eq(todos.id, parseInt(todoId)),
@@ -114,19 +137,24 @@ export async function deleteTodo(todoId) {
     revalidatePath('/dashboard')
     return { success: true }
   } catch (error) {
-    return { error: 'Failed to delete todo' }
+    console.error('❌ Delete todo error:', error)
+    return { error: 'Failed to delete todo: ' + error.message }
   }
 }
 
 export async function toggleTodo(todoId, completed) {
   try {
+    console.log('🔍 Toggling todo - checking session...')
     const session = await getServerSession(authOptions)
     
-    if (!session) {
-      return { error: 'Unauthorized' }
+    if (!session || !session.user || !session.user.id) {
+      console.error('❌ No valid session found')
+      return { error: 'Unauthorized - Please log in again' }
     }
 
-    const updatedTodo = await db.update(todos)
+    const database = await getDatabase()
+    
+    const updatedTodo = await database.update(todos)
       .set({ completed, updatedAt: new Date() })
       .where(
         and(
@@ -143,29 +171,38 @@ export async function toggleTodo(todoId, completed) {
     revalidatePath('/dashboard')
     return { success: true, todo: updatedTodo[0] }
   } catch (error) {
-    return { error: 'Failed to toggle todo' }
+    console.error('❌ Toggle todo error:', error)
+    return { error: 'Failed to toggle todo: ' + error.message }
   }
 }
 
 export async function getTodos() {
   try {
+    console.log('🔍 Getting todos - checking session...')
     const session = await getServerSession(authOptions)
+    console.log('Session data:', session ? { id: session.user?.id, email: session.user?.email, role: session.user?.role } : 'No session')
     
-    if (!session) {
-      return { error: 'Unauthorized' }
+    if (!session || !session.user || !session.user.id) {
+      console.error('❌ No valid session found')
+      return { error: 'Unauthorized - Please log in again', todos: [] }
     }
 
     // Ensure database is available
     const database = await getDatabase()
+    
+    console.log('💾 Fetching todos for userId:', session.user.id)
     
     const userTodos = await database.select()
       .from(todos)
       .where(eq(todos.userId, parseInt(session.user.id)))
       .orderBy(desc(todos.createdAt))
 
+    console.log('✅ Found todos:', userTodos.length)
+
     return { todos: userTodos || [] }
   } catch (error) {
-    return { error: 'Failed to fetch todos', todos: [] }
+    console.error('❌ Get todos error:', error)
+    return { error: 'Failed to fetch todos: ' + error.message, todos: [] }
   }
 }
 
