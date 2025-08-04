@@ -11,6 +11,62 @@ export async function POST(request) {
 
     console.log('Signup attempt for:', email)
 
+    // First, try to create tables if they don't exist
+    let client;
+    try {
+      client = postgres(process.env.DATABASE_URL, {
+        max: 1,
+        ssl: process.env.NODE_ENV === 'production' ? 'require' : false,
+        connect_timeout: 10,
+        idle_timeout: 20,
+      });
+
+      // Create users table
+      await client.unsafe(`
+        CREATE TABLE IF NOT EXISTS "users" (
+          "id" serial PRIMARY KEY NOT NULL,
+          "email" text NOT NULL,
+          "password" text NOT NULL,
+          "role" text DEFAULT 'user' NOT NULL,
+          "approved" boolean DEFAULT false NOT NULL,
+          "rejected" boolean DEFAULT false NOT NULL,
+          "created_at" timestamp DEFAULT now() NOT NULL,
+          CONSTRAINT "users_email_unique" UNIQUE("email")
+        );
+      `);
+      
+      // Create todos table
+      await client.unsafe(`
+        CREATE TABLE IF NOT EXISTS "todos" (
+          "id" serial PRIMARY KEY NOT NULL,
+          "title" text NOT NULL,
+          "description" text,
+          "completed" boolean DEFAULT false NOT NULL,
+          "due_date" timestamp,
+          "tags" json,
+          "priority" text DEFAULT 'medium',
+          "user_id" integer NOT NULL,
+          "created_at" timestamp DEFAULT now() NOT NULL,
+          "updated_at" timestamp DEFAULT now() NOT NULL,
+          CONSTRAINT "todos_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE no action ON UPDATE no action
+        );
+      `);
+      
+      // Create indexes
+      await client.unsafe(`
+        CREATE INDEX IF NOT EXISTS "users_email_idx" ON "users"("email");
+        CREATE INDEX IF NOT EXISTS "todos_user_id_idx" ON "todos"("user_id");
+        CREATE INDEX IF NOT EXISTS "todos_completed_idx" ON "todos"("completed");
+      `);
+      
+      await client.end();
+      console.log('✅ Database tables created successfully');
+      
+    } catch (setupError) {
+      console.error('❌ Failed to create tables:', setupError.message);
+      if (client) await client.end();
+    }
+
     // Get initialized database
     const db = await getDatabase()
 
@@ -20,10 +76,10 @@ export async function POST(request) {
       existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1)
     } catch (error) {
       if (error.code === '42P01') {
-        console.log('🔄 Users table does not exist, creating tables...')
+        console.log('🔄 Users table still does not exist, trying direct creation...')
         
-        // Create tables directly using postgres client
-        const client = postgres(process.env.DATABASE_URL, {
+        // Try direct SQL creation
+        const directClient = postgres(process.env.DATABASE_URL, {
           max: 1,
           ssl: process.env.NODE_ENV === 'production' ? 'require' : false,
           connect_timeout: 10,
@@ -31,8 +87,7 @@ export async function POST(request) {
         });
         
         try {
-          // Create users table
-          await client.unsafe(`
+          await directClient.unsafe(`
             CREATE TABLE IF NOT EXISTS "users" (
               "id" serial PRIMARY KEY NOT NULL,
               "email" text NOT NULL,
@@ -45,8 +100,7 @@ export async function POST(request) {
             );
           `);
           
-          // Create todos table
-          await client.unsafe(`
+          await directClient.unsafe(`
             CREATE TABLE IF NOT EXISTS "todos" (
               "id" serial PRIMARY KEY NOT NULL,
               "title" text NOT NULL,
@@ -62,23 +116,17 @@ export async function POST(request) {
             );
           `);
           
-          // Create indexes
-          await client.unsafe(`
-            CREATE INDEX IF NOT EXISTS "users_email_idx" ON "users"("email");
-            CREATE INDEX IF NOT EXISTS "todos_user_id_idx" ON "todos"("user_id");
-            CREATE INDEX IF NOT EXISTS "todos_completed_idx" ON "todos"("completed");
-          `);
-          
-          await client.end();
-          console.log('✅ Database tables created successfully');
+          await directClient.end();
+          console.log('✅ Tables created via direct SQL');
           
           // Now try to check for existing user again
           existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1)
           
-        } catch (setupError) {
-          console.error('❌ Failed to create tables:', setupError.message);
+        } catch (directError) {
+          console.error('❌ Direct SQL creation failed:', directError.message);
+          await directClient.end();
           return NextResponse.json(
-            { error: 'Database setup failed', details: setupError.message },
+            { error: 'Database setup failed', details: directError.message },
             { status: 500 }
           );
         }
