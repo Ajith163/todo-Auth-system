@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/vercel-build-hook.js && next build",
+    "build": "node scripts/force-database-setup.js && next build",
     "start": "next start",
     "lint": "next lint",
     "create-admin": "node scripts/create-admin.js",
@@ -21,7 +21,8 @@
     "fix-deployment": "node scripts/fix-production-deployment.js",
     "deploy": "node scripts/deploy-production.js",
     "vercel-build": "node scripts/vercel-build-hook.js",
-    "test-db": "node scripts/test-database-setup.js"
+    "test-db": "node scripts/test-database-setup.js",
+    "force-setup": "node scripts/force-database-setup.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
