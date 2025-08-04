@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -9,10 +9,21 @@ import { X, Save, User, Mail, Shield } from 'lucide-react'
 
 export default function UserEditModal({ user, isOpen, onClose, onSave, isLoading }) {
   const [formData, setFormData] = useState({
-    email: user?.email || '',
-    role: user?.role || 'user',
+    email: '',
+    role: 'user',
   })
   const { toast } = useToast()
+
+  // Update form data when user prop changes
+  useEffect(() => {
+    if (user) {
+      console.log('🔍 Setting form data for user:', user)
+      setFormData({
+        email: user.email || '',
+        role: user.role || 'user',
+      })
+    }
+  }, [user])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -27,9 +38,11 @@ export default function UserEditModal({ user, isOpen, onClose, onSave, isLoading
     }
 
     try {
+      console.log('💾 Saving user data:', { userId: user.id, formData })
       await onSave(user.id, formData)
       onClose()
     } catch (error) {
+      console.error('❌ Save user error:', error)
       toast({
         title: 'Error',
         description: 'Failed to update user',
@@ -39,6 +52,7 @@ export default function UserEditModal({ user, isOpen, onClose, onSave, isLoading
   }
 
   const handleInputChange = (field, value) => {
+    console.log('📝 Form field change:', field, value)
     setFormData(prev => ({
       ...prev,
       [field]: value

@@ -48,12 +48,65 @@ export default function AdminDashboard() {
     }
   }, [])
 
+  // Add session check on mount
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        console.log('🔍 Checking session on admin dashboard mount...')
+        const response = await fetch('/api/auth/refresh-session', {
+          method: 'POST',
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          console.log('✅ Session is valid:', data.user)
+        } else {
+          console.error('❌ Session check failed')
+          // Redirect to login if session is invalid
+          window.location.href = '/auth/signin'
+        }
+      } catch (error) {
+        console.error('❌ Session check error:', error)
+      }
+    }
+    
+    checkSession()
+  }, [])
+
   const fetchUsers = async () => {
     try {
+      console.log('🔍 Fetching users in admin dashboard...')
       const result = await getAllUsers()
+      console.log('📊 Users fetch result:', result)
+      
       if (result.users) {
+        console.log('✅ Users fetched successfully:', result.users.length, 'users')
         setUsers(result.users)
       } else if (result.error) {
+        console.error('❌ Users fetch error:', result.error)
+        
+        // If session error, try to refresh session
+        if (result.error.includes('session') || result.error.includes('log in')) {
+          console.log('🔄 Attempting to refresh session...')
+          try {
+            const sessionResponse = await fetch('/api/auth/refresh-session', {
+              method: 'POST',
+            })
+            
+            if (sessionResponse.ok) {
+              console.log('✅ Session refreshed, retrying user fetch...')
+              const retryResult = await getAllUsers()
+              if (retryResult.users) {
+                console.log('✅ Users fetched after session refresh:', retryResult.users.length, 'users')
+                setUsers(retryResult.users)
+                return
+              }
+            }
+          } catch (refreshError) {
+            console.error('❌ Session refresh failed:', refreshError)
+          }
+        }
+        
         toast({
           title: 'Error',
           description: result.error,
@@ -61,9 +114,10 @@ export default function AdminDashboard() {
         })
       }
     } catch (error) {
+      console.error('❌ Fetch users error:', error)
       toast({
         title: 'Error',
-        description: 'Failed to fetch users',
+        description: 'Failed to fetch users: ' + error.message,
         variant: 'destructive',
       })
     }
@@ -71,13 +125,54 @@ export default function AdminDashboard() {
 
   const fetchAllTodos = async () => {
     try {
+      console.log('🔍 Fetching todos in admin dashboard...')
       const response = await fetch('/api/admin/todos')
+      console.log('📊 Todos response status:', response.status)
+      
       if (response.ok) {
         const data = await response.json()
-        setTodos(data.todos)
+        console.log('✅ Todos fetched successfully:', data.todos?.length || 0, 'todos')
+        setTodos(data.todos || [])
+      } else {
+        const errorData = await response.json()
+        console.error('❌ Todos fetch error:', errorData)
+        
+        // If session error, try to refresh session
+        if (errorData.error?.includes('Unauthorized') || response.status === 401) {
+          console.log('🔄 Attempting to refresh session for todos...')
+          try {
+            const sessionResponse = await fetch('/api/auth/refresh-session', {
+              method: 'POST',
+            })
+            
+            if (sessionResponse.ok) {
+              console.log('✅ Session refreshed, retrying todos fetch...')
+              const retryResponse = await fetch('/api/admin/todos')
+              if (retryResponse.ok) {
+                const retryData = await retryResponse.json()
+                console.log('✅ Todos fetched after session refresh:', retryData.todos?.length || 0, 'todos')
+                setTodos(retryData.todos || [])
+                return
+              }
+            }
+          } catch (refreshError) {
+            console.error('❌ Session refresh failed for todos:', refreshError)
+          }
+        }
+        
+        toast({
+          title: 'Error',
+          description: errorData.error || 'Failed to fetch todos',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
-      // Silent error handling
+      console.error('❌ Fetch todos error:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch todos: ' + error.message,
+        variant: 'destructive',
+      })
     }
   }
 
@@ -183,6 +278,8 @@ export default function AdminDashboard() {
   const updateUser = async (userId, userData) => {
     setIsLoading(true)
     try {
+      console.log('🔍 Updating user:', userId, 'with data:', userData)
+      
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'PATCH',
         headers: {
@@ -191,30 +288,38 @@ export default function AdminDashboard() {
         body: JSON.stringify(userData),
       })
 
+      console.log('📊 Update response status:', response.status)
+
       if (response.ok) {
+        const result = await response.json()
+        console.log('✅ User updated successfully:', result)
+        
         fetchUsers()
         setShowEditModal(false)
         setEditingUser(null)
         
         // Check if the updated user is the current user
         if (editingUser && editingUser.email === session?.user?.email) {
+          console.log('🔄 Updating session for current user...')
           // Update the session with new role
           try {
-            const response = await fetch('/api/auth/refresh-session', {
+            const sessionResponse = await fetch('/api/auth/refresh-session', {
               method: 'POST',
             })
             
-            if (response.ok) {
-              const data = await response.json()
+            if (sessionResponse.ok) {
+              const sessionData = await sessionResponse.json()
+              console.log('✅ Session refreshed:', sessionData)
               // Update the session using NextAuth's update function
               await update({
                 user: {
-                  role: data.user.role,
-                  approved: data.user.approved,
+                  role: sessionData.user.role,
+                  approved: sessionData.user.approved,
                 }
               })
             }
           } catch (error) {
+            console.error('❌ Session refresh error:', error)
             // Silent error handling
           }
           
@@ -230,6 +335,7 @@ export default function AdminDashboard() {
         }
       } else {
         const errorData = await response.json()
+        console.error('❌ Update user error:', errorData)
         toast({
           title: 'Error',
           description: errorData.error || 'Failed to update user.',
@@ -237,9 +343,10 @@ export default function AdminDashboard() {
         })
       }
     } catch (error) {
+      console.error('❌ Update user error:', error)
       toast({
         title: 'Error',
-        description: 'Failed to update user.',
+        description: 'Failed to update user: ' + error.message,
         variant: 'destructive',
       })
     } finally {
@@ -283,11 +390,13 @@ export default function AdminDashboard() {
   }
 
   const handleEditUser = (user) => {
+    console.log('🔍 Opening edit modal for user:', user)
     setEditingUser(user)
     setShowEditModal(true)
   }
 
   const handleCloseEditModal = () => {
+    console.log('🔍 Closing edit modal')
     setShowEditModal(false)
     setEditingUser(null)
   }

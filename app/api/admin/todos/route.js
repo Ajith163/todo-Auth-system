@@ -1,50 +1,41 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { getDatabase } from '@/lib/db';
-import { todos, users } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { NextResponse } from 'next/server'
+import { getDatabase } from '@/lib/db'
+import { todos } from '@/lib/db/schema'
+import { desc } from 'drizzle-orm'
 
 export async function GET() {
   try {
-    // Check if user is authenticated and is admin
-    const session = await getServerSession(authOptions);
+    console.log('🔍 Admin todos API called')
+    const session = await getServerSession(authOptions)
     
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session || !session.user || session.user.role !== 'admin') {
+      console.error('❌ Unauthorized access to admin todos')
+      return NextResponse.json({ 
+        error: 'Unauthorized' 
+      }, { status: 401 })
     }
 
-    if (session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
-    }
+    console.log('✅ Admin session verified:', session.user.email)
 
-    const db = await getDatabase();
-
-    // Get all todos with user information
-    const allTodos = await db
-      .select({
-        id: todos.id,
-        title: todos.title,
-        description: todos.description,
-        completed: todos.completed,
-        dueDate: todos.dueDate,
-        tags: todos.tags,
-        priority: todos.priority,
-        createdAt: todos.createdAt,
-        updatedAt: todos.updatedAt,
-        userEmail: users.email,
-        userId: users.id
-      })
+    const database = await getDatabase()
+    
+    const allTodos = await database.select()
       .from(todos)
-      .leftJoin(users, eq(todos.userId, users.id))
-      .orderBy(todos.createdAt);
+      .orderBy(desc(todos.createdAt))
+
+    console.log('✅ Fetched todos successfully:', allTodos.length, 'todos')
 
     return NextResponse.json({ 
       todos: allTodos,
-      total: allTodos.length
-    });
+      count: allTodos.length
+    })
 
   } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('❌ Admin todos API error:', error)
+    return NextResponse.json({ 
+      error: 'Failed to fetch todos: ' + error.message 
+    }, { status: 500 })
   }
 } 
