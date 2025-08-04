@@ -7,13 +7,13 @@ import { Switch } from '@/components/ui/switch'
 import { Edit, Trash2, CheckCircle, XCircle, Clock } from 'lucide-react'
 
 export default function UserManagementTabs({ 
-  users, 
-  pendingUsers, 
-  rejectedUsers, 
-  approvedUsers, 
-  isInitialLoading, 
-  isLoading, 
-  activeTab, 
+  users = [], 
+  pendingUsers = [], 
+  rejectedUsers = [], 
+  approvedUsers = [], 
+  isInitialLoading = false, 
+  isLoading = false, 
+  activeTab = 'pending', 
   setActiveTab,
   approveUser,
   rejectUser,
@@ -42,7 +42,7 @@ export default function UserManagementTabs({
           >
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
-              Pending ({pendingUsers.length})
+              Pending ({Array.isArray(pendingUsers) ? pendingUsers.length : 0})
             </div>
           </button>
           <button
@@ -55,7 +55,7 @@ export default function UserManagementTabs({
           >
             <div className="flex items-center gap-2">
               <XCircle className="w-4 h-4" />
-              Rejected ({rejectedUsers.length})
+              Rejected ({Array.isArray(rejectedUsers) ? rejectedUsers.length : 0})
             </div>
           </button>
           <button
@@ -68,7 +68,7 @@ export default function UserManagementTabs({
           >
             <div className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4" />
-              Approved ({approvedUsers.length})
+              Approved ({Array.isArray(approvedUsers) ? approvedUsers.length : 0})
             </div>
           </button>
         </div>
@@ -94,7 +94,7 @@ export default function UserManagementTabs({
             <div className="space-y-3">
               {/* Pending Users Tab */}
               {activeTab === 'pending' && (
-                pendingUsers.length === 0 ? (
+                (!Array.isArray(pendingUsers) || pendingUsers.length === 0) ? (
                   <div className="text-center py-8">
                     <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500 dark:text-gray-400">
@@ -102,7 +102,7 @@ export default function UserManagementTabs({
                     </p>
                   </div>
                 ) : (
-                  pendingUsers.map((user) => (
+                  (Array.isArray(pendingUsers) ? pendingUsers : []).map((user) => (
                     <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
                       <div className="flex-1">
                         <p className="font-medium text-gray-900 dark:text-white">
@@ -139,7 +139,7 @@ export default function UserManagementTabs({
 
               {/* Rejected Users Tab */}
               {activeTab === 'rejected' && (
-                rejectedUsers.length === 0 ? (
+                (!Array.isArray(rejectedUsers) || rejectedUsers.length === 0) ? (
                   <div className="text-center py-8">
                     <XCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500 dark:text-gray-400">
@@ -147,7 +147,7 @@ export default function UserManagementTabs({
                     </p>
                   </div>
                 ) : (
-                  rejectedUsers.map((user) => (
+                  (Array.isArray(rejectedUsers) ? rejectedUsers : []).map((user) => (
                     <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
                       <div className="flex-1">
                         <p className="font-medium text-gray-900 dark:text-white">
@@ -175,7 +175,7 @@ export default function UserManagementTabs({
 
               {/* Approved Users Tab */}
               {activeTab === 'approved' && (
-                approvedUsers.length === 0 ? (
+                (!Array.isArray(approvedUsers) || approvedUsers.length === 0) ? (
                   <div className="text-center py-8">
                     <CheckCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500 dark:text-gray-400">
@@ -184,7 +184,7 @@ export default function UserManagementTabs({
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {approvedUsers.map((user) => (
+                    {(Array.isArray(approvedUsers) ? approvedUsers : []).map((user) => (
                       <div key={user.id} className="p-4 border rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1 min-w-0">

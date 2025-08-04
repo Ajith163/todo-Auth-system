@@ -87,22 +87,24 @@ export default function UserDashboard() {
 
   // Check for due date notifications
   useEffect(() => {
-    if (!todos || todos.length === 0) return
+    if (!todos || !Array.isArray(todos) || todos.length === 0) return
 
     const checkDueDates = () => {
       const now = new Date()
       const overdueTodos = todos.filter(todo => 
-        todo?.dueDate && 
+        todo && todo.dueDate && 
         new Date(todo.dueDate) < now && 
         !todo.completed
       )
       
       overdueTodos.forEach(todo => {
-        toast({
-          title: 'Task Overdue!',
-          description: `"${todo.title}" is overdue. Please complete it soon.`,
-          variant: 'destructive',
-        })
+        if (todo && todo.title) {
+          toast({
+            title: 'Task Overdue!',
+            description: `"${todo.title}" is overdue. Please complete it soon.`,
+            variant: 'destructive',
+          })
+        }
       })
     }
 
@@ -353,7 +355,7 @@ export default function UserDashboard() {
                     Total Tasks
                   </p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {totalCount}
+                    {Array.isArray(safeTodos) ? safeTodos.length : 0}
                   </p>
                 </div>
                 <div className="text-blue-600">
@@ -370,7 +372,7 @@ export default function UserDashboard() {
                     Completed
                   </p>
                   <p className="text-2xl font-bold text-green-600">
-                    {completedCount}
+                    {Array.isArray(safeTodos) ? safeTodos.filter(todo => todo && todo.completed).length : 0}
                   </p>
                 </div>
                 <div className="text-green-600">
@@ -387,7 +389,7 @@ export default function UserDashboard() {
                     Completion Rate
                   </p>
                   <p className="text-2xl font-bold text-blue-600">
-                    {totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0}%
+                    {Array.isArray(safeTodos) && safeTodos.length > 0 ? Math.round((safeTodos.filter(todo => todo && todo.completed).length / safeTodos.length) * 100) : 0}%
                   </p>
                 </div>
               </div>
@@ -484,21 +486,21 @@ export default function UserDashboard() {
               onClick={() => setFilter('all')}
               className="btn-mobile"
             >
-              All ({totalCount})
+              All ({Array.isArray(safeTodos) ? safeTodos.length : 0})
             </Button>
             <Button
               variant={filter === 'pending' ? 'default' : 'outline'}
               onClick={() => setFilter('pending')}
               className="btn-mobile"
             >
-              Pending ({totalCount - completedCount})
+              Pending ({Array.isArray(safeTodos) ? safeTodos.length - completedCount : 0})
             </Button>
             <Button
               variant={filter === 'overdue' ? 'default' : 'outline'}
               onClick={() => setFilter('overdue')}
               className="btn-mobile"
             >
-              Overdue ({safeTodos.filter(todo => todo && !todo.completed && todo.dueDate && new Date(todo.dueDate) < new Date()).length})
+              Overdue ({Array.isArray(safeTodos) ? safeTodos.filter(todo => todo && !todo.completed && todo.dueDate && new Date(todo.dueDate) < new Date()).length : 0})
             </Button>
             <Button
               variant={filter === 'completed' ? 'default' : 'outline'}
@@ -512,7 +514,7 @@ export default function UserDashboard() {
 
         {/* Todos List */}
         <div className="space-mobile">
-          {filteredTodos.length === 0 ? (
+          {(!Array.isArray(filteredTodos) || filteredTodos.length === 0) ? (
             <Card>
               <CardContent className="card-mobile text-center">
                 <p className="text-gray-500 dark:text-gray-400">
@@ -527,7 +529,7 @@ export default function UserDashboard() {
               </CardContent>
             </Card>
           ) : (
-            filteredTodos.map((todo) => (
+            (Array.isArray(filteredTodos) ? filteredTodos : []).map((todo) => (
               <Card key={todo.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="card-mobile">
                   <div className="flex items-start gap-3">

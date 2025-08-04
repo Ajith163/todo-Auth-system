@@ -296,11 +296,11 @@ export default function AdminDashboard() {
     window.location.href = '/auth/signout'
   }
 
-  const pendingUsers = users.filter(user => !user.approved && !user.rejected)
-  const approvedUsers = users.filter(user => user.approved && !user.rejected)
-  const rejectedUsers = users.filter(user => user.rejected)
-  const completedTodos = todos.filter(todo => todo.completed)
-  const totalTodos = todos.length
+  const pendingUsers = Array.isArray(users) ? users.filter(user => user && !user.approved && !user.rejected) : []
+  const approvedUsers = Array.isArray(users) ? users.filter(user => user && user.approved && !user.rejected) : []
+  const rejectedUsers = Array.isArray(users) ? users.filter(user => user && user.rejected) : []
+  const completedTodos = Array.isArray(todos) ? todos.filter(todo => todo && todo.completed) : []
+  const totalTodos = Array.isArray(todos) ? todos.length : 0
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -344,9 +344,9 @@ export default function AdminDashboard() {
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                       Total Users
                     </p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {users.length}
-                    </p>
+                                         <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                       {Array.isArray(users) ? users.length : 0}
+                     </p>
                   </div>
                   <Users className="w-8 h-8 text-blue-600" />
                 </div>
@@ -359,9 +359,9 @@ export default function AdminDashboard() {
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                       Pending Approvals
                     </p>
-                    <p className="text-2xl font-bold text-orange-600">
-                      {pendingUsers.length}
-                    </p>
+                                         <p className="text-2xl font-bold text-orange-600">
+                       {Array.isArray(pendingUsers) ? pendingUsers.length : 0}
+                     </p>
                   </div>
                   <Clock className="w-8 h-8 text-orange-600" />
                 </div>
@@ -374,9 +374,9 @@ export default function AdminDashboard() {
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                       Rejected Users
                     </p>
-                    <p className="text-2xl font-bold text-red-600">
-                      {rejectedUsers.length}
-                    </p>
+                                         <p className="text-2xl font-bold text-red-600">
+                       {Array.isArray(rejectedUsers) ? rejectedUsers.length : 0}
+                     </p>
                   </div>
                   <X className="w-8 h-8 text-red-600" />
                 </div>
@@ -389,9 +389,9 @@ export default function AdminDashboard() {
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                       Total Todos
                     </p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {totalTodos}
-                    </p>
+                                         <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                       {Array.isArray(todos) ? todos.length : 0}
+                     </p>
                   </div>
                   <Eye className="w-8 h-8 text-purple-600" />
                 </div>
@@ -404,9 +404,9 @@ export default function AdminDashboard() {
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                       Completion Rate
                     </p>
-                    <p className="text-2xl font-bold text-green-600">
-                      {totalTodos > 0 ? Math.round((completedTodos.length / totalTodos) * 100) : 0}%
-                    </p>
+                                         <p className="text-2xl font-bold text-green-600">
+                       {Array.isArray(todos) && todos.length > 0 ? Math.round((completedTodos.length / todos.length) * 100) : 0}%
+                     </p>
                   </div>
                   <CheckCircle className="w-8 h-8 text-green-600" />
                 </div>
@@ -419,13 +419,18 @@ export default function AdminDashboard() {
         <div className="space-mobile">
           <UserManagementTabs
             users={users}
+            pendingUsers={pendingUsers}
+            rejectedUsers={rejectedUsers}
+            approvedUsers={approvedUsers}
+            isInitialLoading={isInitialLoading}
+            isLoading={isLoading}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
-            onApprove={approveUser}
-            onReject={rejectUser}
-            onDelete={deleteUser}
-            onUpdate={updateUser}
-            isLoading={isLoading}
+            approveUser={approveUser}
+            rejectUser={rejectUser}
+            toggleUserApproval={toggleUserApproval}
+            handleEditUser={handleEditUser}
+            deleteUser={deleteUser}
           />
         </div>
 
@@ -440,13 +445,13 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="table-mobile">
-                {todos.length === 0 ? (
+                                 {(!Array.isArray(todos) || todos.length === 0) ? (
                   <p className="text-center text-gray-500 dark:text-gray-400 py-8">
                     No todos found
                   </p>
                 ) : (
-                  <div className="space-mobile">
-                    {todos.map((todo) => (
+                                     <div className="space-mobile">
+                     {(Array.isArray(todos) ? todos : []).map((todo) => (
                       <div
                         key={todo.id}
                         className={`p-4 rounded-lg border ${
