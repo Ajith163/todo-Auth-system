@@ -1,50 +1,100 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
+const path = require('path');
 
-console.log('🚀 Production Deployment Setup\n');
+console.log('🚀 Production Deployment Script\n');
 
-console.log('📋 Pre-deployment Checklist:\n');
+async function deployToProduction() {
+  try {
+    console.log('1. Checking environment variables...');
+    
+    if (!process.env.DATABASE_URL) {
+      console.error('❌ DATABASE_URL is not set');
+      console.log('\n💡 Please set DATABASE_URL in your environment:');
+      console.log('   export DATABASE_URL="your_postgres_connection_string"');
+      console.log('   Or set it in Vercel environment variables');
+      process.exit(1);
+    }
+    
+    console.log('✅ DATABASE_URL is configured');
 
-console.log('1. ✅ Database Schema Created');
-console.log('   - Users table: ✓');
-console.log('   - Todos table: ✓');
-console.log('   - Admin user: ✓ (admin@example.com)\n');
+    console.log('\n2. Setting up database...');
+    
+    try {
+      // Try to push the schema first
+      console.log('Pushing database schema...');
+      execSync('npm run db:push', { 
+        stdio: 'inherit',
+        env: { ...process.env, NODE_ENV: 'production' }
+      });
+      console.log('✅ Database schema pushed successfully');
+    } catch (error) {
+      console.log('⚠️  Schema push failed, trying migrations...');
+      
+      try {
+        execSync('npm run db:migrate', { 
+          stdio: 'inherit',
+          env: { ...process.env, NODE_ENV: 'production' }
+        });
+        console.log('✅ Database migrations applied');
+      } catch (migrationError) {
+        console.error('❌ Migration failed:', migrationError.message);
+        console.log('\n🔧 Manual database setup required:');
+        console.log('1. Connect to your production database');
+        console.log('2. Run the SQL commands from lib/db/migrations/');
+        console.log('3. Or use: npm run db:push');
+        process.exit(1);
+      }
+    }
 
-console.log('2. 🔧 Environment Variables for Vercel:\n');
-console.log('   DATABASE_URL=your_production_database_url');
-console.log('   NEXTAUTH_URL=https://your-app.vercel.app');
-console.log('   NEXTAUTH_SECRET=eef5d215a8e44eb60e9d79e4610dd31bddeecd0506bfc9cd66e2212c0d2857fb\n');
+    console.log('\n3. Building application...');
+    
+    try {
+      execSync('npm run build', { 
+        stdio: 'inherit',
+        env: { ...process.env, NODE_ENV: 'production' }
+      });
+      console.log('✅ Application built successfully');
+    } catch (error) {
+      console.error('❌ Build failed:', error.message);
+      process.exit(1);
+    }
 
-console.log('3. 🗄️  Database Setup Commands:\n');
-console.log('   # For production database:');
-console.log('   npm run db:push');
-console.log('   node scripts/create-admin.js admin@example.com your_password\n');
+    console.log('\n4. Creating admin user...');
+    
+    try {
+      execSync('npm run create-admin admin@example.com admin123', { 
+        stdio: 'inherit',
+        env: { ...process.env, NODE_ENV: 'production' }
+      });
+      console.log('✅ Admin user created');
+    } catch (error) {
+      console.log('⚠️  Admin creation failed (you can create manually later)');
+    }
 
-console.log('4. 🌐 Vercel Deployment Steps:\n');
-console.log('   a. Set environment variables in Vercel dashboard');
-console.log('   b. Push code to GitHub');
-console.log('   c. Deploy to Vercel');
-console.log('   d. Run database migrations on production\n');
+    console.log('\n🎉 Production deployment completed!');
+    console.log('\n📝 Next steps:');
+    console.log('1. Deploy to your hosting platform (Vercel, etc.)');
+    console.log('2. Test user registration and login');
+    console.log('3. Verify all features work correctly');
+    
+    console.log('\n🔑 Test Credentials:');
+    console.log('   Email: admin@example.com');
+    console.log('   Password: admin123');
 
-console.log('5. 🔍 Post-deployment Verification:\n');
-console.log('   - Test signup/signin');
-console.log('   - Test admin dashboard');
-console.log('   - Test todo creation');
-console.log('   - Test user approval flow\n');
+  } catch (error) {
+    console.error('❌ Production deployment failed:', error.message);
+    console.log('\n🔧 Troubleshooting:');
+    console.log('1. Check DATABASE_URL is correct');
+    console.log('2. Ensure database is accessible');
+    console.log('3. Verify database permissions');
+    console.log('4. Check environment variables');
+  }
+}
 
-console.log('💡 Quick Commands:\n');
-console.log('   # Commit and push changes:');
-console.log('   git add .');
-console.log('   git commit -m "Fix database schema and deployment issues"');
-console.log('   git push origin main\n');
+// Check if running in production environment
+if (process.env.NODE_ENV === 'production') {
+  console.log('🌐 Running in production mode');
+}
 
-console.log('   # Deploy to Vercel:');
-console.log('   vercel --prod\n');
-
-console.log('🎯 Current Status:');
-console.log('   ✅ Local database: Working');
-console.log('   ✅ Schema: Created');
-console.log('   ✅ Admin user: Created');
-console.log('   ⏳ Production: Ready for deployment');
-
-console.log('\n📖 For detailed instructions, see DEPLOYMENT_GUIDE.md'); 
+deployToProduction(); 

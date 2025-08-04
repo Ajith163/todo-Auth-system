@@ -1,265 +1,204 @@
-# Todo App - Full Stack Next.js Application
+# Todo App with Authentication and Admin Dashboard
 
-A comprehensive todo application built with Next.js 14, featuring authentication, real-time notifications, and role-based access control.
+A full-stack Next.js application with user authentication, admin dashboard, and todo management system.
 
-## 🚀 Features
+## 🚀 Quick Start
 
-### Core Features
-- **Authentication System**
-  - Email/password authentication with NextAuth.js
-  - Admin approval required before access
-  - Role-based access: admin and user roles
-  - Secure password hashing with bcryptjs
+### Prerequisites
+- Node.js 18+
+- PostgreSQL database
+- npm or yarn
 
-- **Database (PostgreSQL + Drizzle ORM)**
-  - Users table: id, email, password, role, approved, created_at
-  - Todos table: id, title, description, completed, user_id, created_at, updated_at
+### Installation
 
-- **Todo Management (User Side)**
-  - CRUD operations for todos (users can only manage their own todos)
-  - Filter by complete/incomplete status
-  - Real-time updates and notifications
+```bash
+# Clone the repository
+git clone <repository-url>
+cd todo-app
 
-- **Admin Dashboard**
-  - View and approve/reject user registrations
-  - Monitor all todos across users (read-only)
-  - Statistics: total users, pending users, todo count, completion percentage
+# Install dependencies
+npm install
 
-### UI/UX Features
-- **Responsive Design**: Works seamlessly on desktop, tablet, and mobile
-- **Dark/Light Mode**: Built-in theme switching
-- **Modern UI**: Built with shadcn/ui components
-- **Loading States**: Skeleton loaders and loading indicators
-- **Error Handling**: Comprehensive error boundaries and user feedback
+# Set up environment variables
+cp env.example .env.local
+# Edit .env.local with your database URL and other settings
 
-### Technical Features
-- **Real-time Notifications**: Pusher integration for instant updates
-- **Form Validation**: Zod schema validation with react-hook-form
-- **Server Actions**: Next.js 14 server actions for data mutations
-- **Type Safety**: Full TypeScript support (optional)
-- **Performance**: Optimized with Next.js 14 App Router
+# Set up database
+npm run db:push
 
-## 🛠️ Tech Stack
+# Create admin user
+npm run create-admin admin@example.com admin123
 
-- **Framework**: Next.js 14 (App Router)
-- **Authentication**: NextAuth.js
-- **Database**: PostgreSQL
-- **ORM**: Drizzle ORM
-- **Styling**: Tailwind CSS
-- **UI Components**: shadcn/ui
-- **Real-time**: Pusher
-- **Form Handling**: react-hook-form + Zod
-- **Icons**: Lucide React
+# Start development server
+npm run dev
+```
 
-## 📦 Installation
+## 🔧 Fixing Deployment Errors
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd todo-app
-   ```
+### Error: "relation 'users' does not exist"
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+This error occurs when the database tables haven't been created in production. Here's how to fix it:
 
-3. **Set up environment variables**
-   ```bash
-   cp env.example .env.local
-   ```
-   
-   Update `.env.local` with your configuration:
-   ```env
-   # Database
-   DATABASE_URL="postgresql://username:password@localhost:5432/todo_app"
-   
-   # NextAuth
-   NEXTAUTH_URL="http://localhost:3000"
-   NEXTAUTH_SECRET="your-secret-key-here"
-   
-   # Pusher (for real-time notifications)
-   PUSHER_APP_ID="your-pusher-app-id"
-   PUSHER_KEY="your-pusher-key"
-   PUSHER_SECRET="your-pusher-secret"
-   PUSHER_CLUSTER="your-pusher-cluster"
-   ```
+#### Quick Fix:
+```bash
+# 1. Set DATABASE_URL in your deployment environment
+# 2. Run database setup
+npm run fix-deployment
 
-4. **Set up the database**
-   ```bash
-   # Generate and run migrations
-   npx drizzle-kit generate
-   npx drizzle-kit push
-   ```
+# 3. Or manually run:
+npm run db:push
+npm run db:init
+```
 
-5. **Create an admin user**
-   ```bash
-   # You'll need to manually create an admin user in the database
-   # or modify the signup process to create the first user as admin
-   ```
+#### Manual SQL Fix:
+If the above doesn't work, manually run these SQL commands in your database:
 
-6. **Run the development server**
-   ```bash
-   npm run dev
-   ```
+```sql
+-- Create users table
+CREATE TABLE IF NOT EXISTS "users" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "email" text NOT NULL,
+  "password" text NOT NULL,
+  "role" text DEFAULT 'user' NOT NULL,
+  "approved" boolean DEFAULT false NOT NULL,
+  "rejected" boolean DEFAULT false NOT NULL,
+  "created_at" timestamp DEFAULT now() NOT NULL,
+  CONSTRAINT "users_email_unique" UNIQUE("email")
+);
 
-7. **Open your browser**
-   Navigate to [http://localhost:3000](http://localhost:3000)
+-- Create todos table
+CREATE TABLE IF NOT EXISTS "todos" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "title" text NOT NULL,
+  "description" text,
+  "completed" boolean DEFAULT false NOT NULL,
+  "due_date" timestamp,
+  "tags" json,
+  "priority" text DEFAULT 'medium',
+  "user_id" integer NOT NULL,
+  "created_at" timestamp DEFAULT now() NOT NULL,
+  "updated_at" timestamp DEFAULT now() NOT NULL,
+  CONSTRAINT "todos_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE no action ON UPDATE no action
+);
+```
+
+## 📋 Environment Variables
+
+Create a `.env.local` file with:
+
+```env
+DATABASE_URL=your_postgres_connection_string
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your_secret_key_here
+```
 
 ## 🗄️ Database Setup
 
-### PostgreSQL Setup
-1. Install PostgreSQL on your system
-2. Create a new database:
-   ```sql
-   CREATE DATABASE todo_app;
-   ```
-3. Update the `DATABASE_URL` in your `.env.local` file
+```bash
+# Generate migrations
+npm run db:generate
 
-### Database Schema
-The application uses two main tables:
+# Push schema to database
+npm run db:push
 
-**Users Table:**
-```sql
-- id (serial, primary key)
-- email (text, unique)
-- password (text, hashed)
-- role (text, default: 'user')
-- approved (boolean, default: false)
-- created_at (timestamp)
+# Or run migrations
+npm run db:migrate
+
+# View database in Drizzle Studio
+npm run db:studio
 ```
-
-**Todos Table:**
-```sql
-- id (serial, primary key)
-- title (text)
-- description (text, optional)
-- completed (boolean, default: false)
-- user_id (integer, foreign key)
-- created_at (timestamp)
-- updated_at (timestamp)
-```
-
-## 🔐 Authentication Flow
-
-1. **User Registration**
-   - User signs up with email/password
-   - Account is created with `approved: false`
-   - User cannot sign in until approved
-
-2. **Admin Approval**
-   - Admin can view pending users in dashboard
-   - Admin can approve or reject users
-   - Approved users can sign in
-
-3. **Role-based Access**
-   - Users can only manage their own todos
-   - Admins can view all todos and manage users
-
-## 📱 Usage
-
-### For Users
-1. Sign up for an account
-2. Wait for admin approval
-3. Sign in and start creating todos
-4. Mark todos as complete/incomplete
-5. Filter todos by status
-
-### For Admins
-1. Sign in with admin credentials
-2. View pending user approvals
-3. Approve or reject new users
-4. Monitor all todo activity
-5. View statistics and completion rates
-
-## 🔄 Real-time Features
-
-- **Task Completion Notifications**: Admins receive real-time notifications when users complete tasks
-- **Live Updates**: Todo lists update in real-time across all connected clients
-- **Pusher Integration**: WebSocket-like functionality for instant updates
-
-## 🎨 UI Components
-
-The application uses shadcn/ui components for a consistent and modern design:
-
-- **Cards**: For displaying content sections
-- **Buttons**: Various styles and sizes
-- **Inputs**: Form inputs with validation
-- **Switches**: Toggle components
-- **Toasts**: Notification system
-- **Responsive Design**: Mobile-first approach
 
 ## 🚀 Deployment
 
-### Vercel (Recommended)
-1. Push your code to GitHub
-2. Connect your repository to Vercel
-3. Add environment variables in Vercel dashboard
-4. Deploy automatically
+### Vercel Deployment
 
-### Other Platforms
-The application can be deployed to any platform that supports Next.js:
-- Netlify
-- Railway
-- DigitalOcean App Platform
-- AWS Amplify
+1. **Set Environment Variables in Vercel:**
+   - `DATABASE_URL` - Your PostgreSQL connection string
+   - `NEXTAUTH_URL` - Your app's URL (https://your-app.vercel.app)
+   - `NEXTAUTH_SECRET` - A random secret string
 
-## 🔧 Development
+2. **Deploy and Setup Database:**
+   ```bash
+   # Deploy to Vercel
+   git push origin main
+   
+   # After deployment, run database setup
+   npm run fix-deployment
+   ```
 
-### Available Scripts
+3. **Create Admin User:**
+   ```bash
+   npm run create-admin admin@example.com admin123
+   ```
+
+## 🎯 Features
+
+- ✅ User authentication (signup/signin)
+- ✅ Admin dashboard with user management
+- ✅ Todo CRUD operations
+- ✅ User approval system
+- ✅ Role-based access control
+- ✅ Real-time notifications
+- ✅ Responsive design
+- ✅ Dark/light theme
+
+## 🔑 Test Credentials
+
+- **Admin:** admin@example.com / admin123
+- **Regular User:** Create a new account through signup
+
+## 📖 Documentation
+
+- [Deployment Guide](DEPLOYMENT_GUIDE.md)
+- [Technical Implementation](TECHNICAL_IMPLEMENTATION.md)
+- [Requirements Checklist](REQUIREMENTS_CHECKLIST.md)
+
+## 🛠️ Available Scripts
+
 ```bash
+# Development
 npm run dev          # Start development server
 npm run build        # Build for production
 npm run start        # Start production server
-npm run lint         # Run ESLint
+
+# Database
+npm run db:generate  # Generate migrations
+npm run db:push      # Push schema to database
+npm run db:migrate   # Run migrations
+npm run db:studio    # Open Drizzle Studio
+
+# User Management
+npm run create-admin # Create admin user
+npm run approve-user # Approve a user
+npm run check-user   # Check user status
+
+# Deployment
+npm run deploy       # Full production deployment
+npm run fix-deployment # Fix deployment issues
 ```
 
-### Database Migrations
-```bash
-npx drizzle-kit generate  # Generate migration files
-npx drizzle-kit push      # Push migrations to database
-npx drizzle-kit studio    # Open Drizzle Studio
-```
+## 🔍 Troubleshooting
 
-## 🤝 Contributing
+### Common Issues
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+1. **"relation 'users' does not exist"**
+   - Run: `npm run db:push`
+   - Or: `npm run fix-deployment`
 
-## 📄 License
+2. **"DATABASE_URL is not defined"**
+   - Set DATABASE_URL in your environment variables
+   - Check your .env.local file
 
-This project is licensed under the MIT License.
+3. **Build errors**
+   - Ensure all environment variables are set
+   - Check database connectivity
 
-## 🆘 Support
+## 📞 Support
 
-If you encounter any issues or have questions:
+If you encounter issues:
+1. Check the deployment logs
+2. Run `npm run fix-deployment` for diagnostics
+3. Verify database connectivity
+4. Check environment variables
 
-1. Check the [Issues](https://github.com/your-repo/issues) page
-2. Create a new issue with detailed information
-3. Include your environment details and error messages
-
-## 🎯 Roadmap
-
-### Planned Features
-- [ ] Due dates for todos
-- [ ] Todo categories/tags
-- [ ] Bulk operations
-- [ ] Export functionality (CSV/JSON)
-- [ ] Full-text search
-- [ ] Email notifications
-- [ ] Mobile app (React Native)
-- [ ] API documentation
-- [ ] Unit and integration tests
-
-### Performance Improvements
-- [ ] Image optimization
-- [ ] Caching strategies
-- [ ] Database query optimization
-- [ ] Bundle size optimization
-
----
-
-**Built with ❤️ using Next.js 14, Drizzle ORM, and shadcn/ui** 
+For detailed deployment instructions, see [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md). 
