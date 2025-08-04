@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/lib/db'
-import { users } from '@/lib/db/schema'
+import { getDatabase } from '@/lib/db'
+import { users, todos } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 
 // GET - Get specific user
@@ -20,6 +20,7 @@ export async function GET(request, { params }) {
     }
 
     const { id } = params
+    const db = await getDatabase()
 
     // Get user by ID
     const user = await db.select().from(users).where(eq(users.id, parseInt(id))).limit(1)
@@ -52,6 +53,7 @@ export async function PATCH(request, { params }) {
 
     const { id } = params
     const { email, role } = await request.json()
+    const db = await getDatabase()
 
     // Validate input
     if (!email || !role) {
@@ -118,6 +120,7 @@ export async function DELETE(request, { params }) {
     }
 
     const { id } = params
+    const db = await getDatabase()
 
     // Check if user exists
     const existingUser = await db.select().from(users).where(eq(users.id, parseInt(id))).limit(1)
@@ -132,9 +135,6 @@ export async function DELETE(request, { params }) {
     }
 
     // First, delete all todos associated with this user
-    const { todos } = await import('@/lib/db/schema')
-    const { eq } = await import('drizzle-orm')
-    
     const deletedTodos = await db.delete(todos)
       .where(eq(todos.userId, parseInt(id)))
       .returning()

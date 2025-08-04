@@ -244,18 +244,30 @@ export default function AdminDashboard() {
     
     setIsLoading(true)
     try {
+      console.log('Deleting user:', userId)
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'DELETE',
       })
 
       if (response.ok) {
+        const result = await response.json()
+        console.log('Delete result:', result)
         fetchUsers()
         toast({
           title: 'Success',
           description: 'User deleted successfully!',
         })
+      } else {
+        const errorData = await response.json()
+        console.error('Delete failed:', errorData)
+        toast({
+          title: 'Error',
+          description: errorData.error || 'Failed to delete user.',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
+      console.error('Delete error:', error)
       toast({
         title: 'Error',
         description: 'Failed to delete user.',
