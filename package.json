@@ -22,7 +22,8 @@
     "deploy": "node scripts/deploy-production.js",
     "vercel-build": "node scripts/vercel-build-hook.js",
     "test-db": "node scripts/test-database-setup.js",
-    "force-setup": "node scripts/force-database-setup.js"
+    "force-setup": "node scripts/force-database-setup.js",
+    "fix-admin": "node scripts/fix-admin-users.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
