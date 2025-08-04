@@ -98,21 +98,27 @@ export default function UserDashboard() {
   const fetchTodos = async () => {
     try {
       const result = await getTodos()
-      if (result.todos) {
+      if (result && result.todos) {
         setTodos(result.todos)
-      } else if (result.error) {
+      } else if (result && result.error) {
         toast({
           title: 'Error',
           description: result.error,
           variant: 'destructive',
         })
+      } else {
+        // Handle case where result is undefined or doesn't have expected properties
+        console.warn('Unexpected result from getTodos:', result)
+        setTodos([])
       }
     } catch (error) {
+      console.error('Error fetching todos:', error)
       toast({
         title: 'Error',
         description: 'Failed to fetch todos',
         variant: 'destructive',
       })
+      setTodos([])
     }
   }
 

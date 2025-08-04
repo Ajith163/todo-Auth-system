@@ -73,7 +73,12 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4 relative">
+      {/* Theme Toggle - Desktop Position (Top Right) */}
+      <div className="absolute top-4 right-4 hidden sm:block">
+        <ThemeToggle />
+      </div>
+      
       <div className="w-full max-w-md">
         <Card className="shadow-xl">
           <CardHeader className="text-center">
@@ -142,7 +147,8 @@ export default function SignInPage() {
           </CardContent>
         </Card>
         
-        <div className="mt-6 text-center">
+        {/* Theme Toggle - Mobile Position (Centered Below Card) */}
+        <div className="mt-6 text-center sm:hidden">
           <ThemeToggle />
         </div>
       </div>

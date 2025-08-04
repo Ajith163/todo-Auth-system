@@ -44,26 +44,18 @@ export default function SignUpPage() {
 
       const result = await response.json()
 
-      if (!response.ok) {
-        if (result.error === 'User already exists') {
-          toast({
-            title: 'Registration Failed',
-            description: 'An account with this email already exists.',
-            variant: 'destructive',
-          })
-        } else {
-          toast({
-            title: 'Registration Failed',
-            description: result.error || 'Something went wrong. Please try again.',
-            variant: 'destructive',
-          })
-        }
-      } else {
+      if (response.ok) {
         toast({
-          title: 'Registration Successful',
-          description: 'Your account has been created. Please wait for admin approval.',
+          title: 'Success',
+          description: 'Account created successfully! Please sign in.',
         })
         router.push('/auth/signin')
+      } else {
+        toast({
+          title: 'Error',
+          description: result.error || 'Failed to create account.',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       if (error.errors) {
@@ -79,13 +71,18 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4 relative">
+      {/* Theme Toggle - Desktop Position (Top Right) */}
+      <div className="absolute top-4 right-4 hidden sm:block">
+        <ThemeToggle />
+      </div>
+      
       <div className="w-full max-w-md">
         <Card className="shadow-xl">
           <CardHeader className="text-center">
-            <CardTitle className="text-mobile-xl">Create Account</CardTitle>
+            <CardTitle className="text-mobile-xl">Sign Up</CardTitle>
             <CardDescription className="text-mobile">
-              Sign up for a new account to get started
+              Create a new account to get started
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -150,7 +147,7 @@ export default function SignUpPage() {
                   disabled={isLoading}
                   className="w-full btn-mobile"
                 >
-                  {isLoading ? 'Creating Account...' : 'Create Account'}
+                  {isLoading ? 'Creating Account...' : 'Sign Up'}
                 </Button>
               </div>
             </form>
@@ -166,7 +163,8 @@ export default function SignUpPage() {
           </CardContent>
         </Card>
         
-        <div className="mt-6 text-center">
+        {/* Theme Toggle - Mobile Position (Centered Below Card) */}
+        <div className="mt-6 text-center sm:hidden">
           <ThemeToggle />
         </div>
       </div>

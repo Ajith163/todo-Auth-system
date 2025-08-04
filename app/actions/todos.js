@@ -2,7 +2,7 @@
 
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/lib/db'
+import { db, getDatabase } from '@/lib/db'
 import { todos } from '@/lib/db/schema'
 import { eq, and, or, like, inArray, gte, lte, desc, asc } from 'drizzle-orm'
 import { todoFormSchema, todoUpdateSchema, bulkTodoSchema, searchTodoSchema } from '@/lib/validations/todo'
@@ -159,15 +159,18 @@ export async function getTodos() {
       return { error: 'Unauthorized' }
     }
 
-    const userTodos = await db.select()
+    // Ensure database is available
+    const database = await getDatabase()
+    
+    const userTodos = await database.select()
       .from(todos)
       .where(eq(todos.userId, parseInt(session.user.id)))
       .orderBy(desc(todos.createdAt))
 
-    return { todos: userTodos }
+    return { todos: userTodos || [] }
   } catch (error) {
     console.error('Error fetching todos:', error)
-    return { error: 'Failed to fetch todos' }
+    return { error: 'Failed to fetch todos', todos: [] }
   }
 }
 
