@@ -55,7 +55,6 @@ export async function POST(request) {
       message: `Successfully updated ${updatedTodos.length} todos`
     })
   } catch (error) {
-    console.error('Error bulk updating todos:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -90,7 +89,6 @@ export async function DELETE(request) {
       message: `Successfully deleted ${deletedTodos.length} todos`
     })
   } catch (error) {
-    console.error('Error bulk deleting todos:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 } 

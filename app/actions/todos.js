@@ -43,7 +43,6 @@ export async function createTodo(formData) {
     revalidatePath('/dashboard')
     return { success: true, todo: newTodo[0] }
   } catch (error) {
-    console.error('Error creating todo:', error)
     if (error.name === 'ZodError') {
       return { error: 'Validation failed', details: error.errors }
     }
@@ -84,7 +83,6 @@ export async function updateTodo(todoId, updates) {
     revalidatePath('/dashboard')
     return { success: true, todo: updatedTodo[0] }
   } catch (error) {
-    console.error('Error updating todo:', error)
     if (error.name === 'ZodError') {
       return { error: 'Validation failed', details: error.errors }
     }
@@ -116,7 +114,6 @@ export async function deleteTodo(todoId) {
     revalidatePath('/dashboard')
     return { success: true }
   } catch (error) {
-    console.error('Error deleting todo:', error)
     return { error: 'Failed to delete todo' }
   }
 }
@@ -146,7 +143,6 @@ export async function toggleTodo(todoId, completed) {
     revalidatePath('/dashboard')
     return { success: true, todo: updatedTodo[0] }
   } catch (error) {
-    console.error('Error toggling todo:', error)
     return { error: 'Failed to toggle todo' }
   }
 }
@@ -169,7 +165,6 @@ export async function getTodos() {
 
     return { todos: userTodos || [] }
   } catch (error) {
-    console.error('Error fetching todos:', error)
     return { error: 'Failed to fetch todos', todos: [] }
   }
 }
@@ -217,7 +212,6 @@ export async function bulkUpdateTodos(data) {
     revalidatePath('/dashboard')
     return { success: true, updatedCount: updatedTodos.length }
   } catch (error) {
-    console.error('Error bulk updating todos:', error)
     if (error.name === 'ZodError') {
       return { error: 'Validation failed', details: error.errors }
     }
@@ -245,7 +239,6 @@ export async function bulkDeleteTodos(todoIds) {
     revalidatePath('/dashboard')
     return { success: true, deletedCount: deletedTodos.length }
   } catch (error) {
-    console.error('Error bulk deleting todos:', error)
     return { error: 'Failed to bulk delete todos' }
   }
 }
@@ -344,7 +337,6 @@ export async function searchTodos(searchData) {
     
     return { todos: searchResults }
   } catch (error) {
-    console.error('Error searching todos:', error)
     if (error.name === 'ZodError') {
       return { error: 'Validation failed', details: error.errors }
     }
@@ -397,7 +389,6 @@ export async function exportTodos(format = 'json') {
       }
     }
   } catch (error) {
-    console.error('Error exporting todos:', error)
     return { error: 'Failed to export todos' }
   }
 } 

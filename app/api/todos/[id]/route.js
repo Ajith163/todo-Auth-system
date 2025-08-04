@@ -39,7 +39,6 @@ export async function PATCH(request, { params }) {
 
     return NextResponse.json({ todo: updatedTodo[0] })
   } catch (error) {
-    console.error('Error updating todo:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -67,7 +66,6 @@ export async function DELETE(request, { params }) {
 
     return NextResponse.json({ message: 'Todo deleted successfully' })
   } catch (error) {
-    console.error('Error deleting todo:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 } 

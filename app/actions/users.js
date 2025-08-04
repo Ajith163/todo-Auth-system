@@ -30,7 +30,6 @@ export async function approveUser(userId) {
     revalidatePath('/dashboard')
     return { success: true, user: updatedUser[0] }
   } catch (error) {
-    console.error('Error approving user:', error)
     return { error: 'Failed to approve user' }
   }
 }
@@ -58,7 +57,6 @@ export async function rejectUser(userId) {
     revalidatePath('/dashboard')
     return { success: true, user: updatedUser[0] }
   } catch (error) {
-    console.error('Error rejecting user:', error)
     return { error: 'Failed to reject user' }
   }
 }
@@ -90,7 +88,6 @@ export async function switchUserRole(userId, newRole) {
     revalidatePath('/dashboard')
     return { success: true, user: updatedUser[0] }
   } catch (error) {
-    console.error('Error switching user role:', error)
     return { error: 'Failed to switch user role' }
   }
 }
@@ -109,7 +106,6 @@ export async function getAllUsers() {
 
     return { users: allUsers }
   } catch (error) {
-    console.error('Error fetching users:', error)
     return { error: 'Failed to fetch users' }
   }
 }
@@ -144,7 +140,7 @@ export async function deleteUser(userId) {
       .where(eq(todos.userId, parseInt(userId)))
       .returning()
 
-    console.log(`Deleted ${deletedTodos.length} todos for user ${userId}`)
+
 
     // Then delete the user
     const deletedUser = await db.delete(users)
@@ -162,7 +158,6 @@ export async function deleteUser(userId) {
       }
     }
   } catch (error) {
-    console.error('Error deleting user:', error)
     return { error: 'Failed to delete user' }
   }
 } 

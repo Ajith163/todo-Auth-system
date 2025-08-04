@@ -107,7 +107,6 @@ export async function GET(request) {
       filters: { completed, priority, tags, dueDate }
     })
   } catch (error) {
-    console.error('Error searching todos:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 } 

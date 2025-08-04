@@ -34,7 +34,6 @@ export default function SignOutPage() {
         redirect: true 
       })
     } catch (error) {
-      console.error('Signout error:', error)
       router.push('/auth/signin')
     }
   }

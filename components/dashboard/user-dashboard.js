@@ -50,7 +50,7 @@ export default function UserDashboard() {
         setError(null)
         await fetchTodos()
       } catch (err) {
-        console.error('Error loading dashboard data:', err)
+        console.error('Dashboard load error:', err)
         setError('Failed to load dashboard data')
         toast({
           title: 'Error',
@@ -119,13 +119,15 @@ export default function UserDashboard() {
 
   const fetchTodos = async () => {
     try {
+      console.log('Fetching todos for user:', session?.user?.id)
       const result = await getTodos()
+      console.log('Fetch result:', result)
       
       // Ensure result is defined and has expected structure
       if (result && Array.isArray(result.todos)) {
         setTodos(result.todos)
       } else if (result && result.error) {
-        console.error('Error from getTodos:', result.error)
+        console.error('Fetch error:', result.error)
         setError(result.error)
         setTodos([])
         toast({
@@ -135,12 +137,12 @@ export default function UserDashboard() {
         })
       } else {
         // Handle case where result is undefined or doesn't have expected properties
-        console.warn('Unexpected result from getTodos:', result)
+        console.warn('Unexpected fetch result:', result)
         setTodos([])
         setError('Failed to fetch todos')
       }
     } catch (error) {
-      console.error('Error fetching todos:', error)
+      console.error('Fetch todos error:', error)
       setError('Failed to fetch todos')
       setTodos([])
       toast({
@@ -154,6 +156,7 @@ export default function UserDashboard() {
   const addTodo = async (data) => {
     setIsLoading(true)
     try {
+      console.log('Creating todo with data:', data)
       // Create FormData for server action
       const formData = new FormData()
       formData.append('title', data.title.trim())
@@ -161,16 +164,18 @@ export default function UserDashboard() {
       formData.append('dueDate', data.dueDate && data.dueDate.trim() ? data.dueDate : '')
 
       const result = await createTodo(formData)
+      console.log('Create result:', result)
       
       if (result && result.success) {
         form.reset()
         await fetchTodos()
         toast({
           title: 'Success',
-          description: 'Todo added successfully!',
+          description: 'Todo created successfully!',
         })
       } else {
-        const errorMessage = result?.error || 'Failed to add todo.'
+        const errorMessage = result?.error || 'Failed to create todo.'
+        console.error('Create todo error:', errorMessage)
         toast({
           title: 'Error',
           description: errorMessage,
@@ -178,10 +183,10 @@ export default function UserDashboard() {
         })
       }
     } catch (error) {
-      console.error('Error adding todo:', error)
+      console.error('Create todo exception:', error)
       toast({
         title: 'Error',
-        description: 'Failed to add todo.',
+        description: 'Failed to create todo.',
         variant: 'destructive',
       })
     } finally {
@@ -191,7 +196,9 @@ export default function UserDashboard() {
 
   const handleToggleTodo = async (todoId, completed) => {
     try {
+      console.log('Toggling todo:', todoId, 'to completed:', !completed)
       const result = await toggleTodo(todoId, !completed)
+      console.log('Toggle result:', result)
       
       if (result && result.success) {
         await fetchTodos()
@@ -208,6 +215,7 @@ export default function UserDashboard() {
         }
       } else {
         const errorMessage = result?.error || 'Failed to update todo'
+        console.error('Toggle error:', errorMessage)
         toast({
           title: 'Error',
           description: errorMessage,
@@ -215,7 +223,7 @@ export default function UserDashboard() {
         })
       }
     } catch (error) {
-      console.error('Error toggling todo:', error)
+      console.error('Toggle todo exception:', error)
       toast({
         title: 'Error',
         description: 'Failed to update todo',
@@ -226,7 +234,9 @@ export default function UserDashboard() {
 
   const handleDeleteTodo = async (todoId) => {
     try {
+      console.log('Deleting todo:', todoId)
       const result = await deleteTodo(todoId)
+      console.log('Delete result:', result)
       
       if (result && result.success) {
         await fetchTodos()
@@ -236,6 +246,7 @@ export default function UserDashboard() {
         })
       } else {
         const errorMessage = result?.error || 'Failed to delete todo'
+        console.error('Delete error:', errorMessage)
         toast({
           title: 'Error',
           description: errorMessage,
@@ -243,7 +254,7 @@ export default function UserDashboard() {
         })
       }
     } catch (error) {
-      console.error('Error deleting todo:', error)
+      console.error('Delete todo exception:', error)
       toast({
         title: 'Error',
         description: 'Failed to delete todo.',
@@ -273,7 +284,6 @@ export default function UserDashboard() {
         redirect: true 
       })
     } catch (error) {
-      console.error('Error signing out:', error)
       // Fallback: redirect manually
       window.location.href = '/auth/signin'
     }
@@ -397,17 +407,18 @@ export default function UserDashboard() {
           </Card>
         </div>
 
-        {/* Add Todo Form */}
+        {/* Create Todo Form */}
         <Card className="mb-6 sm:mb-8">
           <CardHeader>
-            <CardTitle className="text-mobile-lg">Add New Todo</CardTitle>
+            <CardTitle className="text-mobile-lg">Create New Todo</CardTitle>
             <CardDescription className="text-mobile">
               Create a new task to track your progress
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={form.handleSubmit(addTodo)} className="form-mobile">
-              <div className="flex-mobile gap-4">
+            <form onSubmit={form.handleSubmit(addTodo)} className="space-y-4">
+              {/* Title and Create Button Row */}
+              <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1">
                   <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Title *
@@ -430,11 +441,13 @@ export default function UserDashboard() {
                     className="btn-mobile"
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    {isLoading ? 'Adding...' : 'Add Todo'}
+                    {isLoading ? 'Creating...' : 'Create Todo'}
                   </Button>
                 </div>
               </div>
-              <div className="grid-mobile">
+              
+              {/* Description and Due Date Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Description *
@@ -444,10 +457,10 @@ export default function UserDashboard() {
                     {...form.register('description')}
                     placeholder="Enter todo description..."
                     disabled={isLoading}
-                    className={`input-mobile resize-none ${
+                    className={`input-mobile resize-none w-full ${
                       form.formState.errors.description ? 'border-red-500' : 'border-gray-300'
                     }`}
-                    rows="3"
+                    rows="4"
                   />
                   {form.formState.errors.description && (
                     <p className="text-red-500 text-sm mt-1">{form.formState.errors.description.message}</p>
@@ -462,7 +475,7 @@ export default function UserDashboard() {
                     type="datetime-local"
                     {...form.register('dueDate')}
                     disabled={isLoading}
-                    className={`input-mobile ${
+                    className={`input-mobile w-full ${
                       form.formState.errors.dueDate ? 'border-red-500' : 'border-gray-300'
                     }`}
                   />
@@ -534,9 +547,10 @@ export default function UserDashboard() {
                 <CardContent className="card-mobile">
                   <div className="flex items-start gap-3">
                     <button
-                      onClick={() => handleToggleTodo(todo.id, !todo.completed)}
-                      className="flex-shrink-0 touch-friendly mt-1"
+                      onClick={() => handleToggleTodo(todo.id, todo.completed)}
+                      className="flex-shrink-0 touch-friendly mt-1 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                       disabled={isLoading}
+                      aria-label={todo.completed ? 'Mark as incomplete' : 'Mark as complete'}
                     >
                       {todo.completed ? (
                         <CheckCircle className="w-6 h-6 text-green-600" />
