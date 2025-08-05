@@ -10,12 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast'
 import { signInSchema } from '@/lib/validations'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
-import { Eye, EyeOff } from 'lucide-react'
 
 export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState({})
-  const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -31,7 +29,6 @@ export default function SignInPage() {
     }
 
     try {
-      console.log('🔐 Attempting signin with:', data.email)
       const validatedData = signInSchema.parse(data)
       
       const result = await signIn('credentials', {
@@ -40,14 +37,18 @@ export default function SignInPage() {
         redirect: false,
       })
 
-      console.log('🔐 Signin result:', result)
-
       if (result?.error) {
         console.error('❌ Signin error:', result.error)
         if (result.error.includes('Account not approved yet')) {
           toast({
-            title: 'Account Pending',
+            title: 'Account Pending Approval',
             description: 'Your account is pending approval. Please contact an administrator.',
+            variant: 'destructive',
+          })
+        } else if (result.error.includes('rejected')) {
+          toast({
+            title: 'Account Rejected',
+            description: 'Your account has been rejected. Please contact an administrator.',
             variant: 'destructive',
           })
         } else {
@@ -68,19 +69,12 @@ export default function SignInPage() {
         window.location.href = '/dashboard'
       }
     } catch (error) {
-      console.error('❌ Signin exception:', error)
       if (error.errors) {
         const fieldErrors = {}
         error.errors.forEach((err) => {
           fieldErrors[err.path[0]] = err.message
         })
         setErrors(fieldErrors)
-      } else {
-        toast({
-          title: 'Error',
-          description: 'An unexpected error occurred. Please try again.',
-          variant: 'destructive',
-        })
       }
     } finally {
       setIsLoading(false)
@@ -127,29 +121,15 @@ export default function SignInPage() {
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Password
                   </label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      name="password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Enter your password..."
-                      required
-                      disabled={isLoading}
-                      className={`input-mobile pr-10 ${errors.password ? 'border-red-500' : ''}`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                      disabled={isLoading}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-4 h-4" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="Enter your password..."
+                    required
+                    disabled={isLoading}
+                    className={`input-mobile ${errors.password ? 'border-red-500' : ''}`}
+                  />
                   {errors.password && (
                     <p className="text-red-500 text-sm mt-1">{errors.password}</p>
                   )}

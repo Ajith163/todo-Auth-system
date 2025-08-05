@@ -1,27 +1,61 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useEffect } from 'react'
+import { useState } from 'react'
+import { Button } from './button'
+import { Card, CardContent, CardHeader, CardTitle } from './card'
 
 export default function SessionDebug() {
   const { data: session, status } = useSession()
-
-  useEffect(() => {
-    console.log('🔐 Session Debug - Status:', status)
-    console.log('🔐 Session Debug - Session:', session)
-  }, [session, status])
+  const [showDebug, setShowDebug] = useState(false)
 
   if (process.env.NODE_ENV !== 'development') {
     return null
   }
 
   return (
-    <div className="fixed bottom-4 right-4 bg-black text-white p-4 rounded-lg text-xs max-w-sm z-50">
-      <div className="font-bold mb-2">Session Debug</div>
-      <div>Status: {status}</div>
-      <div>User: {session?.user?.email || 'None'}</div>
-      <div>Role: {session?.user?.role || 'None'}</div>
-      <div>ID: {session?.user?.id || 'None'}</div>
+    <div className="fixed bottom-4 right-4 z-50">
+      <Button
+        onClick={() => setShowDebug(!showDebug)}
+        variant="outline"
+        size="sm"
+        className="bg-white dark:bg-gray-800 shadow-lg"
+      >
+        🔍 Debug
+      </Button>
+      
+      {showDebug && (
+        <Card className="absolute bottom-12 right-0 w-96 max-h-96 overflow-auto shadow-xl">
+          <CardHeader>
+            <CardTitle className="text-sm">Session Debug</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-xs">
+              <div>
+                <strong>Status:</strong> {status}
+              </div>
+              <div>
+                <strong>Session:</strong>
+                <pre className="mt-1 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs overflow-auto">
+                  {JSON.stringify(session, null, 2)}
+                </pre>
+              </div>
+              <div>
+                <strong>User ID:</strong> {session?.user?.id}
+              </div>
+              <div>
+                <strong>Email:</strong> {session?.user?.email}
+              </div>
+              <div>
+                <strong>Role:</strong> {session?.user?.role}
+              </div>
+              <div>
+                <strong>Approved:</strong> {session?.user?.approved?.toString()}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 } 

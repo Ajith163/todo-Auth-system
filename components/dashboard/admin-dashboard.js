@@ -54,25 +54,52 @@ export default function AdminDashboard() {
     const checkSession = async () => {
       try {
         console.log('🔍 Checking session on admin dashboard mount...')
-        const response = await fetch('/api/auth/refresh-session', {
-          method: 'POST',
+        
+        // First check if we have a session from NextAuth
+        if (!session) {
+          console.log('❌ No session found, redirecting to signin')
+          window.location.href = '/auth/signin'
+          return
+        }
+        
+        // Check if user is admin
+        if (session.user.role !== 'admin') {
+          console.log('❌ User is not admin, redirecting to signin')
+          window.location.href = '/auth/signin'
+          return
+        }
+        
+        console.log('✅ Admin session validated:', {
+          id: session.user.id,
+          email: session.user.email,
+          role: session.user.role
         })
         
-        if (response.ok) {
-          const data = await response.json()
-          console.log('✅ Session is valid:', data.user)
-        } else {
-          console.error('❌ Session check failed')
-          // Redirect to login if session is invalid
-          window.location.href = '/auth/signin'
+        // Optional: Verify session with backend
+        try {
+          const response = await fetch('/api/auth/refresh-session', {
+            method: 'POST',
+          })
+          
+          if (!response.ok) {
+            console.error('❌ Session verification failed')
+            window.location.href = '/auth/signin'
+          } else {
+            const data = await response.json()
+            console.log('✅ Session verified with backend:', data.user)
+          }
+        } catch (error) {
+          console.error('❌ Session verification error:', error)
+          // Don't redirect on verification error, just log it
         }
       } catch (error) {
         console.error('❌ Session check error:', error)
+        window.location.href = '/auth/signin'
       }
     }
     
     checkSession()
-  }, [])
+  }, [session])
 
   const fetchUsers = async () => {
     try {
