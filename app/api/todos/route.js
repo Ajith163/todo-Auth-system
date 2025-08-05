@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/lib/db'
+import { getDatabase } from '@/lib/db'
 import { todos } from '@/lib/db/schema'
-import { eq } from 'drizzle-orm'
+import { desc } from 'drizzle-orm'
 import { todoFormSchema } from '@/lib/validations/todo'
 
 export async function GET() {
@@ -14,7 +14,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const userTodos = await db.select().from(todos).where(eq(todos.userId, parseInt(session.user.id)))
+    const userTodos = await getDatabase().select().from(todos).where(eq(todos.userId, parseInt(session.user.id)))
 
     return NextResponse.json({ todos: userTodos })
   } catch (error) {
@@ -48,7 +48,7 @@ export async function POST(request) {
 
     const { title, description, dueDate } = validationResult.data
 
-    const newTodo = await db.insert(todos).values({
+    const newTodo = await getDatabase().insert(todos).values({
       title,
       description,
       dueDate: dueDate && dueDate.trim() ? new Date(dueDate) : null,

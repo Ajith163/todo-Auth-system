@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/lib/db'
+import { getDatabase } from '@/lib/db'
 import { todos } from '@/lib/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 
 export async function PATCH(request, { params }) {
   try {
@@ -17,8 +17,8 @@ export async function PATCH(request, { params }) {
     const { title, description, completed, dueDate } = await request.json()
 
     // Verify the todo belongs to the user
-    const existingTodo = await db.select().from(todos).where(
-      and(eq(todos.id, parseInt(id)), eq(todos.userId, parseInt(session.user.id)))
+    const existingTodo = await getDatabase().select().from(todos).where(
+      eq(todos.id, parseInt(id)), eq(todos.userId, parseInt(session.user.id))
     ).limit(1)
 
     if (existingTodo.length === 0) {
@@ -32,7 +32,7 @@ export async function PATCH(request, { params }) {
     if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : null
     updateData.updatedAt = new Date()
 
-    const updatedTodo = await db.update(todos)
+    const updatedTodo = await getDatabase().update(todos)
       .set(updateData)
       .where(eq(todos.id, parseInt(id)))
       .returning()
@@ -54,15 +54,15 @@ export async function DELETE(request, { params }) {
     const { id } = params
 
     // Verify the todo belongs to the user
-    const existingTodo = await db.select().from(todos).where(
-      and(eq(todos.id, parseInt(id)), eq(todos.userId, parseInt(session.user.id)))
+    const existingTodo = await getDatabase().select().from(todos).where(
+      eq(todos.id, parseInt(id)), eq(todos.userId, parseInt(session.user.id))
     ).limit(1)
 
     if (existingTodo.length === 0) {
       return NextResponse.json({ error: 'Todo not found' }, { status: 404 })
     }
 
-    await db.delete(todos).where(eq(todos.id, parseInt(id)))
+    await getDatabase().delete(todos).where(eq(todos.id, parseInt(id)))
 
     return NextResponse.json({ message: 'Todo deleted successfully' })
   } catch (error) {

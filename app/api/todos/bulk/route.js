@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/lib/db'
+import { getDatabase } from '@/lib/db'
 import { todos } from '@/lib/db/schema'
-import { eq, and, inArray } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 
 export async function POST(request) {
   try {
@@ -39,7 +39,7 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
 
-    const updatedTodos = await db.update(todos)
+    const updatedTodos = await getDatabase().update(todos)
       .set(updateData)
       .where(
         and(
@@ -74,7 +74,7 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'Invalid todo IDs' }, { status: 400 })
     }
 
-    const deletedTodos = await db.delete(todos)
+    const deletedTodos = await getDatabase().delete(todos)
       .where(
         and(
           inArray(todos.id, todoIds),

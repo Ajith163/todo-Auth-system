@@ -1,0 +1,26 @@
+console.log('🧪 Testing Admin Functions...\n');
+
+console.log('📝 Admin Functionality Test Steps:');
+console.log('1. Login as admin@example.com / admin123');
+console.log('2. Go to admin dashboard');
+console.log('3. Test user approval functionality:');
+console.log('   - Create a new user account via signup');
+console.log('   - Try to login with new user (should show pending approval)');
+console.log('   - Go back to admin dashboard');
+console.log('   - Find the new user in "Pending Approvals" tab');
+console.log('   - Click "Approve" button');
+console.log('   - Verify user moves to "Approved Users" tab');
+console.log('   - Try logging in with the new user (should work now)');
+console.log('\n🔍 Debug Steps:');
+console.log('- Check browser console for any errors');
+console.log('- Look for "🔍 Debug" button for session info');
+console.log('- Monitor network tab for API calls');
+console.log('\n✅ Expected Results:');
+console.log('- Admin login should work without redirects');
+console.log('- User approval should work without errors');
+console.log('- New users should require admin approval');
+console.log('- Approved users should be able to login');
+console.log('\n⚠️ If issues persist:');
+console.log('- Clear browser cache and cookies');
+console.log('- Check browser console for error messages');
+console.log('- Verify database connection is working'); 

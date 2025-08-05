@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/lib/db'
+import { getDatabase } from '@/lib/db'
 import { todos } from '@/lib/db/schema'
-import { eq, and, or, like, gte, lte, desc } from 'drizzle-orm'
+import { eq, ilike, or } from 'drizzle-orm'
 
 // Force dynamic rendering since this route uses getServerSession
 export const dynamic = 'force-dynamic'
@@ -29,8 +29,8 @@ export async function GET(request) {
     if (query) {
       whereConditions.push(
         or(
-          like(todos.title, `%${query}%`),
-          like(todos.description, `%${query}%`)
+          ilike(todos.title, `%${query}%`),
+          ilike(todos.description, `%${query}%`)
         )
       )
     }
@@ -48,7 +48,7 @@ export async function GET(request) {
       const tagArray = tags.split(',').map(tag => tag.trim())
       // Simplified tag search - in production, use proper JSON search
       whereConditions.push(
-        or(...tagArray.map(tag => like(todos.tags, `%${tag}%`)))
+        or(...tagArray.map(tag => ilike(todos.tags, `%${tag}%`)))
       )
     }
     
@@ -95,7 +95,7 @@ export async function GET(request) {
       }
     }
     
-    const searchResults = await db.select()
+    const searchResults = await getDatabase().select()
       .from(todos)
       .where(and(...whereConditions))
       .orderBy(desc(todos.createdAt))
