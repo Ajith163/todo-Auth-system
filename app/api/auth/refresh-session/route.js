@@ -23,7 +23,22 @@ export async function POST() {
       role: session.user.role
     })
 
-    // Get fresh user data from database
+    // Handle admin user specially
+    if (session.user.id === 'admin' && session.user.email === 'admin@example.com') {
+      console.log('✅ Admin user session refresh')
+      return NextResponse.json({
+        success: true,
+        user: {
+          id: 'admin',
+          email: 'admin@example.com',
+          role: 'admin',
+          approved: true,
+          rejected: false
+        }
+      })
+    }
+
+    // Get fresh user data from database for regular users
     const database = await getDatabase()
     const user = await database.select()
       .from(users)
