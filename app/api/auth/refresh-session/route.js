@@ -38,11 +38,20 @@ export async function POST() {
       })
     }
 
+    // For regular users, validate the ID is a number
+    const userId = parseInt(session.user.id)
+    if (isNaN(userId)) {
+      console.error('❌ Invalid user ID format:', session.user.id)
+      return NextResponse.json({ 
+        error: 'Invalid user ID format' 
+      }, { status: 400 })
+    }
+
     // Get fresh user data from database for regular users
     const database = await getDatabase()
     const user = await database.select()
       .from(users)
-      .where(eq(users.id, parseInt(session.user.id)))
+      .where(eq(users.id, userId))
       .limit(1)
 
     if (user.length === 0) {

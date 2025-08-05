@@ -75,13 +75,14 @@ export default function AdminDashboard() {
           role: session.user.role
         })
         
-        // For admin user, we don't need to verify with backend since it's a special case
+        // For admin user, skip backend verification since it's a special case
         if (session.user.id === 'admin' && session.user.email === 'admin@example.com') {
           console.log('✅ Admin user verified (special case)')
           return
         }
         
-        // Optional: Verify session with backend for regular users
+        // Only verify with backend for non-admin users or if admin verification is needed
+        console.log('🔄 Verifying session with backend...')
         try {
           const response = await fetch('/api/auth/refresh-session', {
             method: 'POST',
@@ -101,8 +102,8 @@ export default function AdminDashboard() {
         }
       } catch (error) {
         console.error('❌ Session check error:', error)
-        // Only redirect if it's a critical error
-        if (error.message.includes('session')) {
+        // Only redirect if it's a critical session error
+        if (error.message && error.message.includes('session')) {
           window.location.href = '/auth/signin'
         }
       }
