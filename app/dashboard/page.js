@@ -9,10 +9,19 @@ export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
+  
+  console.log('🔐 Dashboard - Session check:', session)
 
-  if (!session) {
+  if (!session || !session.user) {
+    console.log('❌ Dashboard - No session, redirecting to signin')
     redirect('/auth/signin')
   }
+
+  console.log('✅ Dashboard - Session found:', {
+    id: session.user.id,
+    email: session.user.email,
+    role: session.user.role
+  })
 
   if (session.user.role === 'admin') {
     return <AdminDashboard />

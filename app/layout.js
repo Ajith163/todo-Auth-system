@@ -5,6 +5,7 @@ import { SessionProvider } from '@/components/providers/session-provider'
 import { ThemeProvider } from '@/components/providers/theme-provider'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { Toaster } from '@/components/ui/toaster'
+import SessionDebug from '@/components/ui/session-debug'
 
 // Force dynamic rendering since this layout uses getServerSession
 export const dynamic = 'force-dynamic'
@@ -53,6 +54,7 @@ export default async function RootLayout({ children }) {
             <SessionProvider session={session}>
               {children}
               <Toaster />
+              <SessionDebug />
             </SessionProvider>
           </ThemeProvider>
         </ErrorBoundary>

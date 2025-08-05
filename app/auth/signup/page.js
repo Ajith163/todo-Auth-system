@@ -10,12 +10,15 @@ import { useToast } from '@/hooks/use-toast'
 import { signUpSchema } from '@/lib/validations'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import PasswordStrength from '@/components/ui/password-strength'
+import { Eye, EyeOff } from 'lucide-react'
 
 export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState({})
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -54,9 +57,10 @@ export default function SignUpPage() {
         })
         router.push('/auth/signin')
       } else {
+        setErrors({ general: result.error || 'Failed to create account' })
         toast({
           title: 'Error',
-          description: result.error || 'Failed to create account.',
+          description: result.error || 'Failed to create account',
           variant: 'destructive',
         })
       }
@@ -67,6 +71,8 @@ export default function SignUpPage() {
           fieldErrors[err.path[0]] = err.message
         })
         setErrors(fieldErrors)
+      } else {
+        setErrors({ general: 'An unexpected error occurred' })
       }
     } finally {
       setIsLoading(false)
@@ -75,7 +81,6 @@ export default function SignUpPage() {
 
   const handlePasswordChange = (e) => {
     setPassword(e.target.value)
-    // Clear password error when user starts typing
     if (errors.password) {
       setErrors(prev => ({ ...prev, password: '' }))
     }
@@ -83,7 +88,6 @@ export default function SignUpPage() {
 
   const handleConfirmPasswordChange = (e) => {
     setConfirmPassword(e.target.value)
-    // Clear confirm password error when user starts typing
     if (errors.confirmPassword) {
       setErrors(prev => ({ ...prev, confirmPassword: '' }))
     }
@@ -101,7 +105,7 @@ export default function SignUpPage() {
           <CardHeader className="text-center">
             <CardTitle className="text-mobile-xl">Sign Up</CardTitle>
             <CardDescription className="text-mobile">
-              Create a new account to get started
+              Create your account to get started
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -129,22 +133,34 @@ export default function SignUpPage() {
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Password
                   </label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    placeholder="Enter your password..."
-                    required
-                    disabled={isLoading}
-                    value={password}
-                    onChange={handlePasswordChange}
-                    className={`input-mobile ${errors.password ? 'border-red-500' : ''}`}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      name="password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Enter your password..."
+                      required
+                      disabled={isLoading}
+                      value={password}
+                      onChange={handlePasswordChange}
+                      className={`input-mobile pr-10 ${errors.password ? 'border-red-500' : ''}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      disabled={isLoading}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                   {errors.password && (
                     <p className="text-red-500 text-sm mt-1">{errors.password}</p>
                   )}
-                  
-                  {/* Password Strength Indicator */}
                   <div className="mt-3">
                     <PasswordStrength password={password} />
                   </div>
@@ -154,22 +170,34 @@ export default function SignUpPage() {
                   <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Confirm Password
                   </label>
-                  <Input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    placeholder="Confirm your password..."
-                    required
-                    disabled={isLoading}
-                    value={confirmPassword}
-                    onChange={handleConfirmPasswordChange}
-                    className={`input-mobile ${errors.confirmPassword ? 'border-red-500' : ''}`}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      placeholder="Confirm your password..."
+                      required
+                      disabled={isLoading}
+                      value={confirmPassword}
+                      onChange={handleConfirmPasswordChange}
+                      className={`input-mobile pr-10 ${errors.confirmPassword ? 'border-red-500' : ''}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      disabled={isLoading}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                   {errors.confirmPassword && (
                     <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
                   )}
-                  
-                  {/* Password Match Indicator */}
                   {confirmPassword && (
                     <div className="mt-2 flex items-center gap-2">
                       {password === confirmPassword ? (
